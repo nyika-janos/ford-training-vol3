@@ -21,7 +21,7 @@ Create a subscription that can receive messages from the topic.
 Open:
 
 ```
-file-arrived-topic
+file-arrived-topic-<firstname>
 ```
 
 ---

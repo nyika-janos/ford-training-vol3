@@ -59,7 +59,7 @@ Create Topic
 Name:
 
 ```
-file-arrived-topic
+file-arrived-topic-<firstname>
 ```
 
 ---

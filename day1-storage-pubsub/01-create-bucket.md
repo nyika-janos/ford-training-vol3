@@ -9,7 +9,7 @@ Create a personal Cloud Storage bucket that will be used throughout the entire t
 By the end of this exercise you will:
 
 - Create a Cloud Storage bucket
-- Select an appropriate region (europe-west4)
+- Select an appropriate region
 - Select an appropriate storage class
 - Understand the role of Cloud Storage in the target architecture
 
