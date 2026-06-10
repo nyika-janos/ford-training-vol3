@@ -1,5 +1,9 @@
 # Ford GCP Training – Volume 3
 
+<p align="center">
+  <img src="other/ford-training-vol3_architecture.png" alt="Ford training volume 3 target architecture" width="100%">
+</p>
+
 ## Overview
 
 This repository contains the hands-on exercises used during the third GCP training for the Ford data team.
@@ -22,6 +26,8 @@ The target architecture uses:
 - BigQuery
 - Dataform
 - Cloud Run
+- Cloud Scheduler
+- BigQuery Data Transfer Service
 - Cloud Composer (Airflow)
 
 ---
@@ -33,24 +39,29 @@ By the end of the training participants will understand how a typical Alteryx wo
 The final architecture will resemble the following:
 
 ```text
-SharePoint / Excel
-          ↓
-     Cloud Storage
-          ↓
-        Pub/Sub
-          ↓
-       Cloud Run
-          ↓
-       BigQuery
-          ↓
-       Dataform
-          ↓
-     Gold Layer
-          ↓
- Power BI / Excel Export
+SharePoint / Excel / CSV / XML / MS Access / BigQuery sources
+                     ↓
+              Ingestion services
+        Cloud Storage, Cloud Run, DTS
+                     ↓
+                  BigQuery RAW
+                     ↓
+                  Dataform
+                     ↓
+          STAGE → INTERMEDIATE → GOLD
+                     ↓
+          Power BI report / Excel export
 ```
 
 Cloud Composer (Airflow) will orchestrate the complete process.
+
+At a high level, the diagram shows three ingestion patterns:
+
+- SharePoint files are accessed through Microsoft Graph API and imported into Cloud Storage.
+- File arrivals in Cloud Storage can trigger Pub/Sub notifications, which then start Cloud Run-based import logic.
+- Existing BigQuery and MS Access sources can be loaded into the RAW layer through BigQuery Data Transfer Service, Cloud Scheduler and Cloud Run jobs.
+
+Inside BigQuery, Dataform owns the transformation flow from RAW to STAGE, INTERMEDIATE and GOLD datasets. The GOLD layer is then consumed by Power BI reports or exported back to Excel through Cloud Run.
 
 ---
 
@@ -229,7 +240,21 @@ ford-training-vol3
 │
 ├── day2-bigquery-dataform
 │   ├── 01-create-datasets.md
-│   ├── ...
+│   ├── 02-load-raw-tables.md
+│   ├── 03-explore-data.md
+│   ├── 04-create-dataform-repository.md
+│   ├── 05-create-stage-models.md
+│   ├── 06-create-intermediate-model.md
+│   ├── 07-create-gold-model.md
+│   ├── 08-run-dataform.md
+│   ├── materials
+│   │   ├── dealer_master.csv
+│   │   ├── mli_mapping.csv
+│   │   └── sales_data.csv
+│   └── theory
+│       ├── 01-bq-deep-dive.md
+│       ├── 02-dataform-deep-dive.md
+│       └── 03-dataform-repo-workspace.md
 │
 ├── day3-cloudrun
 │   ├── 01-create-cloudrun-service.md
@@ -317,21 +342,17 @@ After completing the training, participants should be able to:
 # Architecture Summary
 
 ```text
-SharePoint / Excel
-          ↓
-     Cloud Storage
-          ↓
-        Pub/Sub
-          ↓
-       Cloud Run
-          ↓
-       BigQuery
-          ↓
-       Dataform
-          ↓
-      Gold Layer
-          ↓
- Power BI / Excel Export
+SharePoint / Excel / CSV / XML / MS Access / BigQuery
+                    ↓
+          Cloud Storage / Cloud Run / DTS
+                    ↓
+                BigQuery RAW
+                    ↓
+                 Dataform
+                    ↓
+       STAGE → INTERMEDIATE → GOLD
+                    ↓
+          Power BI / Excel Export
 
 Cloud Composer (Airflow)
         orchestrates
