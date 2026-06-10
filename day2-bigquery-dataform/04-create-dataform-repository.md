@@ -2,9 +2,11 @@
 
 ## Objective
 
-In this exercise we will create our first Dataform repository.
+In this exercise we will create a Dataform repository and prepare it for development.
 
-The repository will contain all transformation logic that converts our RAW data into reporting-ready GOLD tables.
+We will not write SQL from scratch.
+
+Instead, we will use a pre-built repository structure that already contains the Dataform models we will use throughout the training.
 
 At the end of this exercise you will have:
 
@@ -12,23 +14,23 @@ At the end of this exercise you will have:
 <your_name>_training_dataform
 ```
 
-and a development workspace connected to BigQuery.
+connected to BigQuery and ready for development.
 
 ---
 
 # Why are we doing this?
 
-So far we have:
+So far we have created the RAW layer:
 
 ```text
 CSV Files
     ↓
-RAW Tables
+BigQuery RAW Tables
 ```
 
-The next step is to transform these tables into something useful.
+The next step is to transform the data into a reporting-ready warehouse.
 
-In Alteryx, this would typically be implemented using:
+In Alteryx this would be implemented using:
 
 - Select
 - Formula
@@ -46,64 +48,23 @@ BigQuery
 Dataform
 ```
 
-Think of Dataform as the orchestration layer for SQL transformations.
-
-It helps us:
-
-- Organize SQL code
-- Build dependencies
-- Create repeatable pipelines
-- Manage warehouse layers
-- Test data quality
-
 ---
 
 # What is Dataform?
 
 Dataform is a GCP-native transformation framework.
 
-It allows us to build:
+It helps us:
 
-```text
-RAW
- ↓
-STAGE
- ↓
-INTERMEDIATE
- ↓
-GOLD
-```
+- organize SQL code
+- create reusable transformation pipelines
+- manage dependencies
+- create data quality checks
+- build warehouse layers
 
-pipelines using SQL.
+The actual processing is still performed by BigQuery.
 
-The actual processing is performed by BigQuery.
-
-Dataform's job is to:
-
-- manage models
-- understand dependencies
-- run objects in the correct order
-- provide lineage information
-
----
-
-# Dataform vs Alteryx
-
-A simplified comparison:
-
-| Alteryx | Dataform |
-|----------|----------|
-| Workflow canvas | SQL models |
-| Tool dependencies | Model dependencies |
-| Select Tool | SELECT |
-| Filter Tool | WHERE |
-| Formula Tool | SQL Expressions |
-| Join Tool | JOIN |
-| Summarize Tool | GROUP BY |
-
-The logic is identical.
-
-Only the implementation changes.
+Dataform orchestrates and manages the transformations.
 
 ---
 
@@ -115,7 +76,7 @@ Navigate to:
 Dataform
 ```
 
-from the Google Cloud Console.
+in the Google Cloud Console.
 
 ---
 
@@ -127,11 +88,7 @@ Click:
 Create Repository
 ```
 
----
-
-## Repository Name
-
-Use:
+Repository name:
 
 ```text
 <your_name>_training_dataform
@@ -143,21 +100,15 @@ Example:
 janos_training_dataform
 ```
 
----
-
-## Region
-
-Select:
+Region:
 
 ```text
 europe-west4
 ```
 
-or the region specified by the trainer.
-
 ---
 
-## Git Repository
+# Git Integration
 
 For this exercise select:
 
@@ -165,27 +116,15 @@ For this exercise select:
 Create without a remote repository
 ```
 
-We are not using Git integration yet.
+We will manually import the training files.
 
-Later in production environments Dataform repositories are usually connected to GitHub or GitLab.
-
----
-
-## Create Repository
-
-Click:
-
-```text
-Create
-```
-
-Wait for the repository to be provisioned.
+Later, in real projects, Dataform repositories are usually connected to GitHub or GitLab.
 
 ---
 
 # Create Workspace
 
-After the repository is created:
+After the repository has been created:
 
 Click:
 
@@ -199,17 +138,13 @@ Workspace name:
 development
 ```
 
+Open the workspace.
+
 ---
 
-# Open the Workspace
+# Review the Repository Structure
 
-Open:
-
-```text
-development
-```
-
-You should see a structure similar to:
+You should see something similar to:
 
 ```text
 definitions/
@@ -219,57 +154,7 @@ workflow_settings.yaml
 
 ---
 
-# Understanding the Repository Structure
-
-## definitions/
-
-This is where most transformation models will live.
-
-Examples:
-
-```text
-definitions/
-│
-├── sales_stage.sqlx
-├── dealer_stage.sqlx
-├── mapping_stage.sqlx
-├── sales_enriched.sqlx
-└── sales_gold.sqlx
-```
-
----
-
-## includes/
-
-Reusable SQL logic.
-
-Examples:
-
-```text
-common filters
-shared calculations
-utility functions
-```
-
-We will not use this folder today.
-
----
-
-## workflow_settings.yaml
-
-Repository configuration.
-
-Contains:
-
-- project id
-- default dataset
-- repository settings
-
-For today's training we will mostly leave it unchanged.
-
----
-
-# Connect Dataform to BigQuery
+# Configure workflow_settings.yaml
 
 Open:
 
@@ -277,94 +162,198 @@ Open:
 workflow_settings.yaml
 ```
 
-Verify that the project is:
+Replace the contents with:
+
+```yaml
+defaultProject: ford-training-430008
+defaultLocation: europe-west4
+defaultAssertionDataset: assertions
+
+vars:
+  username: "janos"
+```
+
+Replace:
 
 ```text
-ford-training-430008
+janos
+```
+
+with your own first name.
+
+Examples:
+
+```yaml
+vars:
+  username: "barni"
+```
+
+```yaml
+vars:
+  username: "tianze"
+```
+
+```yaml
+vars:
+  username: "adam"
 ```
 
 ---
 
-# Verify Access
+# Why are we storing the username here?
 
-Click:
+Throughout the training every participant will have their own datasets:
 
 ```text
-Start Development
+janos_raw
+janos_stage
+janos_gold
 ```
 
-or
+or:
+
+```text
+barni_raw
+barni_stage
+barni_gold
+```
+
+Instead of hardcoding these names throughout the project, we store the username once and generate everything else automatically.
+
+---
+
+# Download the Training Repository
+
+Open:
+
+[ford-training-vol3-day2-dataform-repo](https://github.com/nyika-janos/ford-training-vol3-day2-dataform-repo?utm_source=chatgpt.com)
+
+Download:
+
+```text
+Code
+↓
+Download ZIP
+```
+
+Extract the archive locally.
+
+---
+
+# Review the Repository Structure
+
+Inside the downloaded repository you will find:
+
+```text
+definitions/
+includes/
+```
+
+The files have already been prepared for this training.
+
+---
+
+# Upload the Training Files
+
+Copy the contents of:
+
+```text
+definitions/
+```
+
+from the downloaded repository into your Dataform repository.
+
+Copy the contents of:
+
+```text
+includes/
+```
+
+into your Dataform repository.
+
+Your structure should now look like:
+
+```text
+definitions/
+├── dealer_stage.sqlx
+├── mapping_stage.sqlx
+├── sales_stage.sqlx
+├── sales_enrich.sqlx
+└── sales_gold.sqlx
+
+includes/
+└── config.js
+```
+
+---
+
+# Review includes/config.js
+
+Open:
+
+```text
+includes/config.js
+```
+
+This file automatically generates dataset names based on the username stored in:
+
+```yaml
+workflow_settings.yaml
+```
+
+For example:
+
+```yaml
+username: "janos"
+```
+
+automatically becomes:
+
+```text
+janos_raw
+janos_stage
+janos_gold
+```
+
+This approach prevents hardcoding dataset names throughout the project.
+
+---
+
+# Review the Model Structure
+
+Open:
+
+```text
+sales_stage.sqlx
+```
+
+Notice:
+
+```sql
+schema: require("../includes/config").stage_dataset
+```
+
+The dataset name is generated dynamically.
+
+The same pattern is used throughout the repository.
+
+---
+
+# Compile the Repository
+
+Click:
 
 ```text
 Compile
 ```
 
-depending on the current UI version.
+The compilation should complete successfully.
 
-Dataform should successfully connect to BigQuery.
+If compilation fails:
 
-If an error appears:
-
-- verify permissions
-- verify project selection
-- ask the trainer for assistance
-
----
-
-# Explore the Lineage Concept
-
-One of the biggest advantages of Dataform is dependency management.
-
-Later we will create models like:
-
-```text
-sales_stage
-```
-
-```text
-dealer_stage
-```
-
-```text
-mapping_stage
-```
-
-which will feed:
-
-```text
-sales_enriched
-```
-
-which will feed:
-
-```text
-sales_gold
-```
-
-Dataform automatically understands this dependency graph.
-
----
-
-# Visualizing the Future Pipeline
-
-This is what we will build during the next exercises:
-
-```text
-mli_mapping
-               \
-                \
-                 → sales_enriched
-                /
-dealer_master  /
-              /
-sales_data   /
-                 ↓
-            sales_gold
-```
-
-This should look familiar.
-
-It is essentially the same logic we saw in the Alteryx workflows.
+- verify the username
+- verify workflow_settings.yaml
+- verify that all files were copied correctly
 
 ---
 
@@ -376,28 +365,18 @@ You should now have:
 
 ✓ Development workspace
 
-✓ Connection to BigQuery
+✓ workflow_settings.yaml configured
 
-✓ Access to the definitions folder
+✓ definitions imported
+
+✓ includes imported
+
+✓ Successful compilation
 
 ---
 
 # What comes next?
 
-In the next exercise we will create our first Dataform models.
+In the next exercise we will review the STAGE models and execute the first transformations.
 
-We will start with the STAGE layer:
-
-```text
-RAW
- ↓
-STAGE
-```
-
-and perform basic cleaning operations such as:
-
-- TRIM
-- UPPER
-- CAST
-
-before moving on to joins and business logic.
+We will clean and standardize the RAW data before applying business logic.

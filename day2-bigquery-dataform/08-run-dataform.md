@@ -12,7 +12,7 @@ The goal is to understand:
 - assertions
 - monitoring
 
-At the end of this exercise you will have a complete understanding of how Dataform manages a warehouse pipeline.
+At the end of this exercise you will have a fully functioning Dataform pipeline that transforms RAW data into a reporting-ready GOLD table.
 
 ---
 
@@ -31,11 +31,7 @@ RAW
 STAGE
 ├── sales_stage
 ├── dealer_stage
-└── mapping_stage
-
-        ↓
-
-INTERMEDIATE
+├── mapping_stage
 └── sales_enriched
 
         ↓
@@ -44,7 +40,7 @@ GOLD
 └── sales_gold
 ```
 
-This is already a simplified version of a real enterprise warehouse.
+This is already a simplified version of a real-world cloud data warehouse.
 
 ---
 
@@ -64,7 +60,7 @@ This ensures:
 
 - correct execution order
 - dependency management
-- automatic validation
+- data quality validation
 - reproducibility
 
 ---
@@ -83,7 +79,7 @@ Open:
 <your_name>_training_dataform
 ```
 
-Open the:
+and select your:
 
 ```text
 development
@@ -95,7 +91,7 @@ workspace.
 
 # Review the Repository
 
-Verify that you have the following files:
+Verify that the following files exist:
 
 ```text
 definitions/
@@ -103,8 +99,72 @@ definitions/
 ├── sales_stage.sqlx
 ├── dealer_stage.sqlx
 ├── mapping_stage.sqlx
-├── sales_enriched.sqlx
+├── sales_enrich.sqlx
 └── sales_gold.sqlx
+
+includes/
+
+└── config.js
+```
+
+---
+
+# Review workflow_settings.yaml
+
+Open:
+
+```text
+workflow_settings.yaml
+```
+
+Verify that your username is configured correctly.
+
+Example:
+
+```yaml
+vars:
+  username: "janos"
+```
+
+or:
+
+```yaml
+vars:
+  username: "barni"
+```
+
+This setting determines which datasets Dataform will use.
+
+---
+
+# Review Generated Datasets
+
+Remember that the username automatically generates:
+
+```text
+<username>_raw
+<username>_stage
+<username>_gold
+```
+
+For example:
+
+```text
+janos_raw
+janos_stage
+janos_gold
+```
+
+These names are created through:
+
+```text
+workflow_settings.yaml
+```
+
+and
+
+```text
+includes/config.js
 ```
 
 ---
@@ -121,10 +181,10 @@ The repository should compile successfully.
 
 If compilation fails:
 
-- check SQL syntax
-- check model names
-- check ref() references
-- check dataset names
+- verify workflow_settings.yaml
+- verify the username
+- verify all SQLX files are present
+- verify includes/config.js exists
 
 ---
 
@@ -142,34 +202,27 @@ or
 Dependency Graph
 ```
 
-depending on the UI version.
-
-You should see a graph similar to:
+You should see something similar to:
 
 ```text
-sales_data
-       ↓
 sales_stage
-       ↓
+      ↓
 
-dealer_master
-       ↓
 dealer_stage
-       ↓
+      ↓
 
-mli_mapping
-       ↓
 mapping_stage
-       ↓
+      ↓
 
-       sales_enriched
-              ↓
-         sales_gold
+sales_enriched
+      ↓
+
+sales_gold
 ```
 
 ---
 
-# Understanding the Graph
+# Understanding the Dependency Graph
 
 Notice that:
 
@@ -191,10 +244,10 @@ dealer_stage
 mapping_stage
 ```
 
-Dataform learned these dependencies automatically through:
+These dependencies were created automatically through:
 
 ```sql
-ref()
+${ref("...")}
 ```
 
 statements.
@@ -203,7 +256,23 @@ No manual dependency configuration was required.
 
 ---
 
-# Start Pipeline Execution
+# Why Is This Important?
+
+Imagine a warehouse containing:
+
+```text
+50 tables
+100 tables
+500 tables
+```
+
+Manually tracking dependencies becomes impossible.
+
+Dataform manages this automatically.
+
+---
+
+# Start a Pipeline Execution
 
 Click:
 
@@ -221,7 +290,7 @@ Choose:
 Run all actions
 ```
 
-This tells Dataform to execute the complete pipeline.
+This tells Dataform to execute the complete transformation pipeline.
 
 ---
 
@@ -236,8 +305,8 @@ Start Execution
 Dataform will now:
 
 1. Build STAGE models
-2. Build INTERMEDIATE model
-3. Build GOLD model
+2. Build sales_enriched
+3. Build sales_gold
 4. Execute assertions
 
 automatically.
@@ -262,20 +331,20 @@ sales_gold
 assertions
 ```
 
-Notice that Dataform automatically executes models in the correct order.
+Notice that Dataform automatically determines the correct execution order.
 
 ---
 
 # Review Execution Details
 
-Open the execution details.
+Open the execution details page.
 
 Observe:
 
 - execution duration
-- generated SQL
 - execution order
 - model status
+- assertion status
 
 This information is extremely useful during troubleshooting.
 
@@ -299,7 +368,7 @@ If everything completed successfully:
 
 ---
 
-# Verify the GOLD Layer
+# Verify the STAGE Dataset
 
 Navigate to:
 
@@ -310,14 +379,39 @@ BigQuery Studio
 Open:
 
 ```text
-<your_name>_gold.sales_gold
+<your_name>_stage
 ```
 
-Preview the results.
+Verify the following tables exist:
+
+```text
+sales_stage
+dealer_stage
+mapping_stage
+sales_enriched
+```
 
 ---
 
-# Validate Business Results
+# Verify the GOLD Dataset
+
+Open:
+
+```text
+<your_name>_gold
+```
+
+Verify:
+
+```text
+sales_gold
+```
+
+exists.
+
+---
+
+# Review the Final Results
 
 Run:
 
@@ -328,23 +422,24 @@ ORDER BY Total_Revenue DESC
 LIMIT 20;
 ```
 
-Observe:
+Review:
 
-- Markets
-- Product Baskets
-- Revenue
-- Quantities
+- Market
+- Basket
+- Total_Qty
+- Total_Revenue
+- Transaction_Count
 
-This is the type of data that business users typically consume.
+These are business-facing metrics.
 
 ---
 
-# Review Assertions
+# Review the Assertions
 
 Open:
 
 ```text
-sales_gold.sqlx
+definitions/sales_gold.sqlx
 ```
 
 Review:
@@ -358,9 +453,7 @@ assertions: {
 
 Remember:
 
-These checks are executed automatically.
-
-No additional SQL is required.
+These validations are executed automatically whenever the model runs.
 
 ---
 
@@ -369,7 +462,7 @@ No additional SQL is required.
 Imagine that tomorrow:
 
 ```text
-Market = NULL
+Basket = NULL
 ```
 
 appears in the GOLD table.
@@ -384,7 +477,7 @@ Assertion Fails
 Execution Fails
 ```
 
-This prevents bad data from reaching reports.
+The issue is detected before bad data reaches reporting tools.
 
 ---
 
@@ -393,17 +486,19 @@ This prevents bad data from reaching reports.
 Without validation:
 
 ```text
-Broken data
+Broken Data
       ↓
 Power BI
       ↓
-Wrong business decisions
+Incorrect Reports
+      ↓
+Incorrect Decisions
 ```
 
 With validation:
 
 ```text
-Broken data
+Broken Data
       ↓
 Assertion Failure
       ↓
@@ -416,7 +511,7 @@ Problems are detected much earlier.
 
 # Compare With Alteryx
 
-Think about the workflow we analyzed earlier.
+Think about the workflows we reviewed at the beginning of the training.
 
 In Alteryx:
 
@@ -446,7 +541,7 @@ INTERMEDIATE
 GOLD
 ```
 
-managed by:
+implemented through:
 
 ```text
 BigQuery
@@ -456,7 +551,7 @@ Dataform
 
 The business logic is almost identical.
 
-Only the implementation differs.
+The implementation approach is different.
 
 ---
 
@@ -502,16 +597,16 @@ RAW Tables
 STAGE Models
       ↓
 
-INTERMEDIATE Model
+sales_enriched
       ↓
 
-GOLD Table
+sales_gold
       ↓
 
 Power BI / Excel
 ```
 
-This is the same architecture pattern used in many modern cloud data platforms.
+This is the same architectural pattern used by many modern cloud data platforms.
 
 ---
 
@@ -521,7 +616,7 @@ Today we loaded the source files manually.
 
 Tomorrow we will automate the ingestion process.
 
-Instead of manually loading CSV files:
+Instead of manually uploading CSV files into BigQuery:
 
 ```text
 Excel File
@@ -530,13 +625,15 @@ Cloud Storage
       ↓
 Cloud Run
       ↓
-BigQuery RAW
+RAW Tables
+      ↓
+Dataform
+      ↓
+GOLD Tables
 ```
 
-The warehouse pipeline we built today will remain unchanged.
+The Dataform pipeline we built today will remain unchanged.
 
-Only the ingestion process will become automated.
+Only the ingestion process becomes automated.
 
-This is one of the key benefits of a layered architecture:
-
-each component can evolve independently without changing the rest of the pipeline.
+This separation of responsibilities is one of the key advantages of a layered architecture.

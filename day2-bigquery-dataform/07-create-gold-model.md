@@ -1,122 +1,126 @@
-# 07 - Create GOLD Model
+# 07 - Create the GOLD Layer and Data Quality Checks
 
 ## Objective
 
-In this exercise we will create the final reporting layer of our warehouse.
+In this exercise we will create the final reporting layer of the warehouse.
 
-The purpose of the GOLD layer is to provide clean, business-friendly and reporting-ready datasets.
+The GOLD layer contains business-ready data that can be consumed directly by:
 
-At the end of this exercise you will have:
+- Power BI
+- Excel
+- Looker
+- Reporting applications
+- Downstream data products
+
+At the end of this exercise we will have:
 
 ```text
-sales_gold
+<your_name>_gold.sales_gold
 ```
 
-inside:
-
-```text
-<your_name>_gold
-```
-
-This table will be the final output of our Dataform pipeline.
-
-In addition, we will introduce Dataform assertions and automated data quality validation.
+and our first automated Dataform data quality checks.
 
 ---
 
-# Why do we need a GOLD layer?
+# What is a GOLD Layer?
 
-The INTERMEDIATE layer contains detailed transactional data.
+The GOLD layer represents the final version of the data.
 
-This is useful for data engineers and analysts, but business users typically do not want:
+Unlike RAW or STAGE tables, GOLD tables are designed for business consumption.
 
-- transaction-level data
-- technical columns
-- complex joins
-- transformation logic
+A GOLD table should:
 
-Business users usually want answers to questions like:
+- have clear business meaning
+- be easy to query
+- hide technical complexity
+- contain aggregated and enriched data
 
-- What was the revenue by market?
-- What was the revenue by product category?
-- Which basket performed best?
-- How many units were sold?
+Think of it as:
 
-The GOLD layer provides exactly these types of answers.
+```text
+RAW
+↓
+STAGE
+↓
+INTERMEDIATE
+↓
+GOLD
+↓
+Business Users
+```
 
 ---
 
-# Current Architecture
+# What Should NOT Be in a GOLD Layer?
 
-At the moment our pipeline looks like this:
+Business users should not need to know:
+
+```text
+DealerCode
+MLI
+Source File Names
+Technical Keys
+```
+
+Instead they should see:
+
+```text
+Market
+Basket
+Revenue
+Quantity
+```
+
+The GOLD layer translates technical data into business data.
+
+---
+
+# Review the Current Warehouse
+
+We currently have:
 
 ```text
 RAW
-          ↓
+├── sales_data
+├── dealer_master
+└── mli_mapping
+
 STAGE
-          ↓
-INTERMEDIATE
+├── sales_stage
+├── dealer_stage
+├── mapping_stage
 └── sales_enriched
 ```
 
-After this exercise:
+Today we will create:
 
 ```text
-RAW
-          ↓
-STAGE
-          ↓
-INTERMEDIATE
-└── sales_enriched
-          ↓
 GOLD
 └── sales_gold
 ```
 
 ---
 
-# What is a GOLD Table?
-
-A GOLD table should be:
-
-✓ Easy to understand
-
-✓ Easy to query
-
-✓ Fast to consume
-
-✓ Stable
-
-✓ Business-oriented
-
-A Power BI report should ideally connect directly to a GOLD table rather than rebuilding business logic inside Power BI.
-
----
-
-# Create sales_gold.sqlx
+# Open sales_gold.sqlx
 
 Navigate to:
 
 ```text
-definitions
+definitions/sales_gold.sqlx
 ```
 
-Create a new file:
-
-```text
-sales_gold.sqlx
-```
+This model creates our final reporting table.
 
 ---
 
-# Configure the Model
+# Review the Configuration Block
 
-Paste:
+At the top of the file you should see:
 
 ```sql
 config {
   type: "table",
-  schema: "<your_name>_gold",
+  schema: require("../includes/config").gold_dataset,
   name: "sales_gold",
 
   assertions: {
@@ -126,171 +130,249 @@ config {
 }
 ```
 
-Replace:
+Several important concepts appear here.
 
-```text
-<your_name>
+---
+
+# Why Are We Using a Separate Dataset?
+
+Notice:
+
+```sql
+schema: require("../includes/config").gold_dataset
 ```
 
-with your own name.
+For a user named:
 
-Example:
+```text
+janos
+```
+
+the table will be created in:
 
 ```text
 janos_gold
 ```
 
+This keeps reporting tables separate from staging and transformation tables.
+
 ---
 
-# What are Assertions?
+# Review the Source Table
+
+Locate:
+
+```sql
+FROM ${ref("sales_enriched")}
+```
+
+Again we use:
+
+```text
+ref()
+```
+
+instead of hardcoded table names.
+
+Dataform automatically manages dependencies.
+
+---
+
+# Review the Aggregation Logic
+
+The GOLD table groups data by:
+
+```sql
+Market,
+Basket
+```
+
+and calculates:
+
+```sql
+SUM(Qty)
+SUM(Revenue)
+COUNT(*)
+```
+
+The result becomes:
+
+```text
+Market
+Basket
+Total_Qty
+Total_Revenue
+Transaction_Count
+```
+
+---
+
+# Why Aggregate?
+
+The source table contains transaction-level data.
+
+Business users usually do not need every transaction.
+
+Instead they want summaries such as:
+
+```text
+Revenue by Market
+Revenue by Product Group
+Quantity by Basket
+```
+
+The GOLD layer prepares exactly this type of information.
+
+---
+
+# Review the Output Columns
+
+The final GOLD table contains:
+
+```text
+Market
+Basket
+Total_Qty
+Total_Revenue
+Transaction_Count
+```
+
+Notice that:
+
+```text
+DealerCode
+MLI
+DealerName
+Month
+```
+
+are no longer included.
+
+Those details are useful for processing but not necessary for this report.
+
+---
+
+# What Are Assertions?
+
+The next section is:
+
+```sql
+assertions: {
+  nonNull: ["Market", "Basket"],
+  uniqueKey: ["Market", "Basket"]
+}
+```
 
 Assertions are automated data quality checks.
 
-Earlier in Exercise 03 we manually verified:
-
-- uniqueness
-- null values
-- join quality
-
-Now we will automate those checks.
-
-Dataform will automatically generate validation queries behind the scenes.
-
-If an assertion fails:
-
-```text
-Dataform Run = FAILED
-```
-
-This is extremely useful in production pipelines.
+They run every time the model executes.
 
 ---
 
-# Understanding the Assertions
+# Why Do We Need Data Quality Checks?
 
-## nonNull
+Without validation:
+
+```text
+Broken Data
+↓
+Power BI
+↓
+Wrong Reports
+↓
+Wrong Decisions
+```
+
+With validation:
+
+```text
+Broken Data
+↓
+Assertion Failure
+↓
+Pipeline Stops
+```
+
+Problems are detected much earlier.
+
+---
+
+# Understanding nonNull
+
+The first assertion:
 
 ```sql
 nonNull: ["Market", "Basket"]
 ```
 
-This means:
+means:
 
 ```text
-Market cannot be NULL
-Basket cannot be NULL
+Market must always contain a value
+Basket must always contain a value
 ```
 
-If either column contains NULL values:
-
-```text
-Assertion FAIL
-```
+If a NULL value appears, Dataform will fail the execution.
 
 ---
 
-## uniqueKey
+# Understanding uniqueKey
+
+The second assertion:
 
 ```sql
 uniqueKey: ["Market", "Basket"]
 ```
 
-This means:
+means:
 
 ```text
-Market + Basket
+Each Market + Basket combination
+must appear only once.
 ```
 
-must uniquely identify every row.
-
-Example:
+Examples:
 
 Valid:
 
-| Market | Basket |
-|----------|----------|
-| HU | Engine |
-| HU | Parts |
-| NL | Engine |
+```text
+HU | SUV
+HU | Parts
+NL | SUV
+```
 
 Invalid:
 
-| Market | Basket |
-|----------|----------|
-| HU | Engine |
-| HU | Engine |
+```text
+HU | SUV
+HU | SUV
+```
 
-The second example would fail the assertion.
+The second example would fail validation.
 
 ---
 
-# Add the Aggregation Logic
+# Where Did These Checks Come From?
 
-Paste:
+Earlier today we manually investigated:
 
 ```sql
-SELECT
-    Market,
-    Basket,
-    SUM(Qty) AS Total_Qty,
-    SUM(Revenue) AS Total_Revenue,
-    COUNT(*) AS Transaction_Count
-FROM ${ref("sales_enriched")}
-GROUP BY
-    Market,
-    Basket
+COUNT(*)
+
+COUNT(DISTINCT ...)
+
+NULL checks
 ```
+
+during data profiling.
+
+Now we are automating those checks.
+
+This is exactly how mature warehouse projects evolve.
 
 ---
 
-# What are we doing?
-
-Instead of looking at individual sales transactions, we are summarizing the data.
-
-We group by:
-
-```text
-Market
-Basket
-```
-
-and calculate:
-
-```text
-Total Quantity
-Total Revenue
-Transaction Count
-```
-
-This is one of the most common reporting patterns in analytics projects.
-
----
-
-# Alteryx Equivalent
-
-This Dataform model corresponds roughly to:
-
-```text
-Input
-  ↓
-Summarize
-  ↓
-Output
-```
-
-inside Alteryx.
-
-The SQL equivalent is:
-
-```sql
-GROUP BY
-SUM()
-COUNT()
-```
-
----
-
-# Compile the Repository
+# Compile the Model
 
 Click:
 
@@ -298,76 +380,53 @@ Click:
 Compile
 ```
 
-The repository should compile successfully.
-
-At this point Dataform understands the following dependency chain:
-
-```text
-sales_data
-       ↓
-sales_stage
-       ↓
-sales_enriched
-       ↓
-sales_gold
-```
+The model should compile successfully.
 
 ---
 
-# Examine the Lineage Graph
+# Review the Dependency Graph
 
-Open the lineage view.
-
-You should now see something similar to:
+Open:
 
 ```text
-mli_mapping
-               \
-                \
-                 \
-                  sales_enriched
-                 /
-                /
-dealer_master  /
-              /
-sales_data
-      ↓
+Lineage
+```
+
+You should now see:
+
+```text
 sales_stage
       ↓
-sales_gold
-```
 
-This dependency graph was created automatically from the ref() statements.
+dealer_stage
+      ↓
 
----
+mapping_stage
+      ↓
 
-# Execute the Pipeline
-
-Click:
-
-```text
-Start Execution
-```
-
-Select:
-
-```text
-sales_gold
-```
-
-Dataform will automatically determine that it depends on:
-
-```text
 sales_enriched
+      ↓
+
+sales_gold
 ```
 
-and execute the required dependency chain.
-
-Wait until execution completes successfully.
+The entire transformation flow is now visible.
 
 ---
 
-# Verify the Table
+# Execute sales_gold
+
+Run:
+
+```text
+sales_gold
+```
+
+Wait until execution completes.
+
+---
+
+# Verify the GOLD Dataset
 
 Navigate to:
 
@@ -378,130 +437,49 @@ BigQuery Studio
 Open:
 
 ```text
-<your_name>_gold.sales_gold
+<your_name>_gold
 ```
 
-Preview the data.
+You should see:
 
-You should see aggregated results.
-
-Example:
-
-| Market | Basket | Total_Qty | Total_Revenue |
-|----------|----------|----------|----------|
-| HU | Engine | 12500 | 1250000 |
-| HU | Parts | 11800 | 1180000 |
+```text
+sales_gold
+```
 
 ---
 
-# Validate the Aggregation
-
-How many rows exist?
+# Inspect the Results
 
 Run:
 
 ```sql
-SELECT COUNT(*)
-FROM `<your_name>_gold.sales_gold`;
+SELECT *
+FROM `<your_name>_gold.sales_gold`
+ORDER BY Total_Revenue DESC
+LIMIT 20;
 ```
 
-Expected:
+Review:
 
-A relatively small number of rows.
+- Market
+- Basket
+- Total_Qty
+- Total_Revenue
+- Transaction_Count
 
-Why?
-
-Because:
-
-```text
-10,000 transactions
-        ↓
-Aggregation
-        ↓
-20 reporting rows
-```
-
-(approximately)
+This is now a reporting-ready table.
 
 ---
 
-# Check Revenue by Market
+# Validate Uniqueness
 
 Run:
 
 ```sql
 SELECT
     Market,
-    SUM(Total_Revenue) AS Revenue
-FROM `<your_name>_gold.sales_gold`
-GROUP BY Market
-ORDER BY Revenue DESC;
-```
-
----
-
-# Check Revenue by Basket
-
-Run:
-
-```sql
-SELECT
     Basket,
-    SUM(Total_Revenue) AS Revenue
-FROM `<your_name>_gold.sales_gold`
-GROUP BY Basket
-ORDER BY Revenue DESC;
-```
-
----
-
-# Manual Validation
-
-Let's manually validate the same rules that Dataform is checking.
-
----
-
-## Check for NULL Markets
-
-```sql
-SELECT
-    COUNT(*) AS null_markets
-FROM `<your_name>_gold.sales_gold`
-WHERE Market IS NULL;
-```
-
-Expected:
-
-```text
-0
-```
-
----
-
-## Check for NULL Baskets
-
-```sql
-SELECT
-    COUNT(*) AS null_baskets
-FROM `<your_name>_gold.sales_gold`
-WHERE Basket IS NULL;
-```
-
-Expected:
-
-```text
-0
-```
-
----
-
-## Check Uniqueness
-
-```sql
-SELECT
-    Market,
-    Basket,
-    COUNT(*) AS cnt
+    COUNT(*) cnt
 FROM `<your_name>_gold.sales_gold`
 GROUP BY
     Market,
@@ -509,91 +487,85 @@ GROUP BY
 HAVING COUNT(*) > 1;
 ```
 
-Expected:
+Expected result:
 
 ```text
-0 rows returned
+0 rows
 ```
+
+This confirms the uniqueness assumption.
 
 ---
 
-# How Dataform Executes Assertions
+# Validate Null Values
 
-Behind the scenes Dataform generates additional validation queries.
-
-Conceptually it creates checks similar to:
+Run:
 
 ```sql
 SELECT *
-FROM sales_gold
+FROM `<your_name>_gold.sales_gold`
 WHERE Market IS NULL
+   OR Basket IS NULL;
 ```
 
-and
-
-```sql
-SELECT
-    Market,
-    Basket,
-    COUNT(*)
-FROM sales_gold
-GROUP BY
-    Market,
-    Basket
-HAVING COUNT(*) > 1
-```
-
-If any rows are returned:
+Expected result:
 
 ```text
-Assertion FAIL
+0 rows
 ```
 
-and the pipeline is marked as unsuccessful.
+This confirms the non-null assumption.
 
 ---
 
-# Why is this Important?
+# Compare to Alteryx
 
-Imagine that tomorrow:
-
-- a source file changes
-- a mapping table is corrupted
-- a join introduces duplicates
-
-Without validation:
+The logic we just implemented is equivalent to:
 
 ```text
-Bad data reaches Power BI
-```
-
-With assertions:
-
-```text
-Pipeline fails
+Input
 ↓
-Problem detected immediately
+Join
+↓
+Formula
+↓
+Summarize
+↓
+Output
 ```
 
-This is one of the key differences between ad-hoc reporting and production-grade data engineering.
+inside an Alteryx workflow.
+
+The difference is that Dataform:
+
+- tracks dependencies
+- stores everything in Git
+- performs automated testing
+- documents lineage
 
 ---
 
-# Production Thinking
+# Why Is This Important for Power BI?
 
-In real projects we commonly implement:
+Most reporting tools should connect to:
 
 ```text
-✓ not null
-✓ unique
-✓ referential integrity
-✓ accepted values
-✓ freshness checks
+GOLD
 ```
 
-Dataform provides mechanisms for all of these.
+not:
 
-The assertions we created today are the first step toward automated data quality monitoring.
+```text
+RAW
+```
+
+and usually not:
+
+```text
+STAGE
+```
+
+The GOLD layer acts as the contract between the data team and business users.
 
 ---
 
@@ -603,39 +575,40 @@ You should now have:
 
 ✓ sales_gold
 
-inside:
+✓ Automated assertions
 
-```text
-<your_name>_gold
-```
+✓ Reporting-ready dataset
 
-✓ Automatic non-null validation
+✓ Aggregated business metrics
 
-✓ Automatic uniqueness validation
+✓ Full warehouse lineage
 
-✓ Reporting-ready aggregated data
-
-✓ A complete warehouse pipeline
-
-```text
-RAW
- ↓
-STAGE
- ↓
-INTERMEDIATE
- ↓
-GOLD
-```
+✓ End-to-end Dataform pipeline
 
 ---
 
-# What comes next?
+# What Comes Next?
 
-In the final exercise we will run the complete pipeline end-to-end and review:
+Today we loaded CSV files manually and transformed them using Dataform.
 
-- dependencies
-- lineage
-- assertions
-- execution order
+Tomorrow we will automate the ingestion process.
 
-to understand how Dataform manages a complete warehouse workflow.
+Instead of manually loading files into BigQuery:
+
+```text
+Excel File
+      ↓
+Cloud Storage
+      ↓
+Cloud Run
+      ↓
+RAW
+      ↓
+Dataform
+      ↓
+GOLD
+```
+
+The warehouse architecture remains exactly the same.
+
+Only the ingestion layer becomes automated.

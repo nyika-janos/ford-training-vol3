@@ -2,58 +2,58 @@
 
 ## Objective
 
-In this exercise we will create our first Dataform models.
+In this exercise we will examine the STAGE layer and execute our first Dataform transformations.
 
-The purpose of the STAGE layer is to perform technical data cleaning before applying any business logic.
+The purpose of the STAGE layer is not to implement business logic.
 
-At the end of this exercise you will have:
+Its purpose is to prepare the data for later processing.
+
+Typical STAGE activities include:
+
+- data type harmonization
+- column standardization
+- trimming text values
+- converting keys into a consistent format
+- preparing data for joins
+
+At the end of this exercise you will have three STAGE tables:
 
 ```text
-sales_stage
-dealer_stage
-mapping_stage
+<your_name>_stage.sales_stage
+<your_name>_stage.dealer_stage
+<your_name>_stage.mapping_stage
 ```
 
-tables created by Dataform.
+---
+
+# Why Do We Need a STAGE Layer?
+
+Many people are tempted to join and aggregate data directly from the RAW tables.
+
+This usually works at the beginning.
+
+Over time however:
+
+- source systems change
+- data types change
+- file formats change
+- additional business rules appear
+
+The STAGE layer acts as a protective boundary between source systems and business logic.
+
+A good rule of thumb is:
+
+```text
+RAW = What we received
+
+STAGE = What we trust
+```
 
 ---
 
-# Why do we need a STAGE layer?
+# Review the Data Warehouse Layers
 
-A common mistake in data projects is mixing:
-
-- technical cleaning
-- business logic
-- reporting logic
-
-inside the same SQL query.
-
-Instead, we separate responsibilities.
-
-The STAGE layer is responsible for:
-
-- standardizing text
-- fixing data types
-- renaming columns
-- removing technical inconsistencies
-
-The STAGE layer should **not** contain business logic.
-
-No joins.
-
-No aggregations.
-
-No KPIs.
-
-No reporting calculations.
-
-Only technical cleanup.
-
----
-
-# What will we build?
-
-Today our architecture looks like:
+Our warehouse currently looks like this:
 
 ```text
 RAW
@@ -62,253 +62,162 @@ RAW
 └── mli_mapping
 ```
 
-After this exercise:
+Today we will create:
 
 ```text
-RAW
- ↓
 STAGE
 ├── sales_stage
 ├── dealer_stage
 └── mapping_stage
 ```
 
----
-
-# Dataform Model Basics
-
-Each transformation in Dataform is stored in a file:
+Later we will build:
 
 ```text
-.sqlx
-```
+INTERMEDIATE
+└── sales_enriched
 
-Example:
-
-```text
-sales_stage.sqlx
-```
-
-Each file generates a table or view in BigQuery.
-
-Think of a Dataform model as:
-
-```text
-One SQL file
-=
-One transformation step
+GOLD
+└── sales_gold
 ```
 
 ---
 
-# Create sales_stage.sqlx
+# Open sales_stage.sqlx
 
 Navigate to:
 
 ```text
-definitions
+definitions/sales_stage.sqlx
 ```
 
-Click:
-
-```text
-Create File
-```
-
-Name:
-
-```text
-sales_stage.sqlx
-```
+Review the model.
 
 ---
 
-# Configure the Model
+# Review the Configuration Block
 
-Paste the following code:
+At the top of the file you should see:
 
 ```sql
 config {
   type: "table",
-  schema: "<your_name>_stage",
+  schema: require("../includes/config").stage_dataset,
   name: "sales_stage"
 }
-
-SELECT
-    UPPER(Market) AS Market,
-    TRIM(DealerCode) AS DealerCode,
-    CAST(Month AS INT64) AS Month,
-    CAST(Qty AS INT64) AS Qty,
-    CAST(Revenue AS NUMERIC) AS Revenue,
-    TRIM(MLI) AS MLI
-FROM `${dataform.projectConfig.defaultDatabase}.<your_name>_raw.sales_data`
 ```
 
-Replace:
+This tells Dataform:
 
-```text
-<your_name>
-```
+- create a table
+- place it into the STAGE dataset
+- name the table sales_stage
 
-with your own name.
-
-Example:
+Notice that we do not hardcode:
 
 ```text
 janos_stage
-janos_raw
 ```
+
+or
+
+```text
+barni_stage
+```
+
+The dataset is generated automatically from the username.
 
 ---
 
-# What are we doing?
+# Review the Source Table
 
-Let's review the transformations:
+Locate:
 
-## UPPER
+```sql
+FROM `${raw_dataset}.sales_data`
+```
+
+This is our RAW source table.
+
+Remember:
+
+```text
+RAW tables are never modified.
+```
+
+Every transformation happens in a new layer.
+
+---
+
+# Review the Data Type Conversion
+
+Locate:
+
+```sql
+CAST(MLI AS STRING) AS MLI
+```
+
+Why is this needed?
+
+Because the CSV import created:
+
+```text
+MLI = INTEGER
+```
+
+However:
+
+```text
+MLI
+```
+
+is actually a business key.
+
+Business keys are usually treated as strings.
+
+This avoids future problems when:
+
+```text
+0001
+0010
+0100
+1000
+```
+
+need to be represented.
+
+---
+
+# Review Additional Standardization
+
+Notice:
 
 ```sql
 UPPER(Market)
 ```
 
-Standardizes text values.
-
-Example:
-
-```text
-hu
-Hu
-HU
-```
-
-becomes:
-
-```text
-HU
-```
-
----
-
-## TRIM
+and
 
 ```sql
 TRIM(DealerCode)
 ```
 
-Removes leading and trailing spaces.
+These are simple but important transformations.
 
-Example:
-
-```text
-" D001 "
-```
-
-becomes:
+They help prevent issues such as:
 
 ```text
-"D001"
+HU
+Hu
+hu
+HU
 ```
+
+being treated as different values.
 
 ---
 
-## CAST
-
-```sql
-CAST(Month AS INT64)
-```
-
-Ensures the correct data type.
-
-This is important for:
-
-- calculations
-- filtering
-- aggregations
-
----
-
-# Create dealer_stage.sqlx
-
-Create another file:
-
-```text
-dealer_stage.sqlx
-```
-
-Paste:
-
-```sql
-config {
-  type: "table",
-  schema: "<your_name>_stage",
-  name: "dealer_stage"
-}
-
-SELECT
-    UPPER(Market) AS Market,
-    TRIM(DealerCode) AS DealerCode,
-    TRIM(DealerName) AS DealerName
-FROM `${dataform.projectConfig.defaultDatabase}.<your_name>_raw.dealer_master`
-```
-
----
-
-# Create mapping_stage.sqlx
-
-Create:
-
-```text
-mapping_stage.sqlx
-```
-
-Paste:
-
-```sql
-config {
-  type: "table",
-  schema: "<your_name>_stage",
-  name: "mapping_stage"
-}
-
-SELECT
-    TRIM(MLI) AS MLI,
-    TRIM(Basket) AS Basket,
-    TRIM(PCT) AS PCT,
-    TRIM(MPL_Code) AS MPL_Code
-FROM `${dataform.projectConfig.defaultDatabase}.<your_name>_raw.mli_mapping`
-```
-
----
-
-# Understanding Dataform Dependencies
-
-At this point we have:
-
-```text
-sales_stage
-    ↑
-sales_data
-```
-
-```text
-dealer_stage
-    ↑
-dealer_master
-```
-
-```text
-mapping_stage
-    ↑
-mli_mapping
-```
-
-These are simple one-to-one transformations.
-
-The interesting dependencies will appear in the next exercise when we start joining tables.
-
----
-
-# Compile the Repository
+# Compile sales_stage.sqlx
 
 Click:
 
@@ -316,39 +225,148 @@ Click:
 Compile
 ```
 
-Dataform should successfully compile.
-
-If compilation fails:
-
-- verify dataset names
-- verify spelling
-- verify SQL syntax
+The model should compile successfully.
 
 ---
 
-# Run the STAGE Models
+# Open dealer_stage.sqlx
 
-Click:
+Navigate to:
 
 ```text
-Start Execution
+definitions/dealer_stage.sqlx
 ```
 
-Select:
+Review the model.
+
+---
+
+# Purpose of dealer_stage
+
+This model prepares dealer master data.
+
+The transformations are intentionally simple:
+
+```sql
+UPPER(Market)
+
+TRIM(DealerCode)
+
+TRIM(DealerName)
+```
+
+The goal is consistency.
+
+Dealer information will later be joined with sales data.
+
+---
+
+# Compile dealer_stage.sqlx
+
+Verify that the model compiles successfully.
+
+---
+
+# Open mapping_stage.sqlx
+
+Navigate to:
+
+```text
+definitions/mapping_stage.sqlx
+```
+
+Review the model.
+
+---
+
+# Purpose of mapping_stage
+
+This table contains business mappings.
+
+In the original Alteryx workflows this mapping came from an Excel file.
+
+Examples:
+
+```text
+MLI
+Basket
+PCT
+MPL_Code
+```
+
+The purpose of this model is to prepare those values for later enrichment.
+
+---
+
+# Review the MLI Conversion
+
+Locate:
+
+```sql
+CAST(MLI AS STRING) AS MLI
+```
+
+Again we convert MLI to STRING.
+
+This ensures that:
+
+```text
+sales_stage.MLI
+```
+
+and
+
+```text
+mapping_stage.MLI
+```
+
+have the same data type.
+
+This is essential for successful joins.
+
+---
+
+# Compile mapping_stage.sqlx
+
+Verify successful compilation.
+
+---
+
+# Execute Individual Models
+
+We will now execute the three STAGE models.
+
+Run:
 
 ```text
 sales_stage
-dealer_stage
-mapping_stage
 ```
 
-Execute the models.
-
-Wait for successful completion.
+Wait until execution completes.
 
 ---
 
-# Verify in BigQuery
+Run:
+
+```text
+dealer_stage
+```
+
+Wait until execution completes.
+
+---
+
+Run:
+
+```text
+mapping_stage
+```
+
+Wait until execution completes.
+
+---
+
+# Verify the Generated Tables
 
 Navigate to:
 
@@ -372,102 +390,64 @@ mapping_stage
 
 ---
 
-# Validate Record Counts
+# Inspect sales_stage
 
 Run:
 
 ```sql
-SELECT COUNT(*) FROM `<your_name>_stage.sales_stage`;
+SELECT *
+FROM `<your_name>_stage.sales_stage`
+LIMIT 20;
 ```
 
-Expected:
+Review:
+
+- Market
+- DealerCode
+- MLI
+- Month
+- Qty
+- Revenue
+
+---
+
+# Verify the MLI Data Type
+
+Open the schema.
+
+Confirm that:
 
 ```text
-10000
+MLI
 ```
 
----
-
-Run:
-
-```sql
-SELECT COUNT(*) FROM `<your_name>_stage.dealer_stage`;
-```
-
-Expected:
+is now:
 
 ```text
-10000
+STRING
 ```
+
+This is one of the key objectives of the STAGE layer.
 
 ---
 
-Run:
+# Compare RAW vs STAGE
 
-```sql
-SELECT COUNT(*) FROM `<your_name>_stage.mapping_stage`;
-```
-
-Expected:
+RAW:
 
 ```text
-10000
+Original source structure
 ```
 
----
-
-# Data Quality Validation
-
-Now let's perform the same checks we used on the RAW layer.
-
----
-
-## Check MLI Uniqueness
-
-```sql
-SELECT
-    COUNT(*) AS total_rows,
-    COUNT(DISTINCT MLI) AS distinct_mli
-FROM `<your_name>_stage.mapping_stage`;
-```
-
-Expected:
+STAGE:
 
 ```text
-total_rows = distinct_mli
+Standardized structure
 ```
 
----
+Notice that the business meaning has not changed.
 
-## Check DealerCode Uniqueness
-
-```sql
-SELECT
-    COUNT(*) AS total_rows,
-    COUNT(DISTINCT DealerCode) AS distinct_dealers
-FROM `<your_name>_stage.dealer_stage`;
-```
-
-Expected:
-
-```text
-total_rows = distinct_dealers
-```
-
----
-
-# Why is this important?
-
-The STAGE layer is where we establish trust in the data.
-
-Every later layer assumes:
-
-- values are standardized
-- data types are correct
-- keys are clean
-- records are usable
-
-If the STAGE layer is unreliable, every downstream layer becomes unreliable.
+We have only improved consistency and usability.
 
 ---
 
@@ -481,25 +461,28 @@ You should now have:
 
 ✓ mapping_stage
 
-inside:
+✓ Successful execution
 
-```text
-<your_name>_stage
-```
+✓ Verified schemas
 
-and successfully created your first Dataform models.
+✓ Standardized business keys
 
 ---
 
-# What comes next?
+# What Comes Next?
 
-In the next exercise we will create our first real business transformation.
+The STAGE layer prepares the data.
 
-We will:
+In the next exercise we will create the first business transformation layer.
 
-- JOIN the tables
-- enrich sales records
-- add dealer names
-- add product classifications
+We will join:
 
-and build our first INTERMEDIATE layer model.
+```text
+sales_stage
++
+dealer_stage
++
+mapping_stage
+```
+
+to create an enriched dataset that contains both transactional and business context information.
