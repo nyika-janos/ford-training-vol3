@@ -256,9 +256,17 @@ ford-training-vol3
 │       ├── 02-dataform-deep-dive.md
 │       └── 03-dataform-repo-workspace.md
 │
-├── day3-cloudrun
-│   ├── 01-create-cloudrun-service.md
-│   ├── ...
+├── day3-git-cloud-run
+│   ├── 01-git-alapok.md
+│   └── materials
+│       └── data-importer
+│           ├── Dockerfile
+│           ├── README.md
+│           ├── create_sample_excel.py
+│           ├── main.py
+│           ├── requirements.txt
+│           ├── samples
+│           └── sql
 │
 └── day4-composer
     ├── 01-create-composer-environment.md

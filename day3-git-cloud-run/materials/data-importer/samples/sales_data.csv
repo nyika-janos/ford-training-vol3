@@ -1,0 +1,5 @@
+dealer_code,market,sales_date,model,units,revenue
+D001,HU,2026-05-01,Focus,3,72000
+D002,CZ,2026-05-01,Puma,2,54000
+D003,SK,2026-05-02,Kuga,1,39000
+D001,HU,2026-05-03,Mustang Mach-E,1,62000
