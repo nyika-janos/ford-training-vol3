@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS `ford-training-430008.training_config.file_ingestion_
   event_id STRING OPTIONS(description="A Pub/Sub vagy Cloud Storage esemény azonosítója, amely a futást elindította."),
   bucket_name STRING OPTIONS(description="Annak a Cloud Storage bucketnek a neve, ahol a forrásfájl található."),
   object_name STRING OPTIONS(description="A feldolgozott Cloud Storage objektum teljes útvonala a bucketen belül."),
+  object_generation STRING OPTIONS(description="A Cloud Storage objektum generációs azonosítója, amely segít ugyanazon fájlfeltöltés ismételt kézbesítésének kiszűrésében."),
   status STRING NOT NULL OPTIONS(description="A feldolgozás eredményállapota, például SUCCESS, FAILED vagy UNKNOWN_CONFIG."),
   message STRING OPTIONS(description="Rövid szöveges üzenet a futás eredményéről vagy hibájáról."),
   config_ids ARRAY<STRING> OPTIONS(description="Azoknak a config soroknak az azonosítói, amelyek alapján a fájl feldolgozása történt."),

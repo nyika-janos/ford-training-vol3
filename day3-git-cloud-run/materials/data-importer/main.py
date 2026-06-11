@@ -66,6 +66,11 @@ def decode_pubsub_request(payload):
         or attributes.get("objectId")
         or attributes.get("name")
     )
+    object_generation = (
+        event.get("generation")
+        or attributes.get("objectGeneration")
+        or attributes.get("generation")
+    )
 
     if not bucket_name or not object_name:
         raise ValueError("Could not find bucket or object name in Pub/Sub message.")
@@ -74,6 +79,7 @@ def decode_pubsub_request(payload):
         "event_id": event_id,
         "bucket_name": bucket_name,
         "object_name": object_name,
+        "object_generation": str(object_generation) if object_generation else None,
         "raw_event": event,
         "attributes": attributes,
     }
@@ -85,6 +91,29 @@ def config_table_ref():
 
 def run_log_table_ref():
     return f"{PROJECT_ID}.{CONFIG_DATASET}.{RUN_LOG_TABLE}"
+
+
+def already_processed(event):
+    query = f"""
+        SELECT 1
+        FROM `{run_log_table_ref()}`
+        WHERE bucket_name = @bucket_name
+          AND object_name = @object_name
+          AND COALESCE(object_generation, "") = COALESCE(@object_generation, "")
+          AND status IN ("SUCCESS", "SUCCESS_MOVE_FAILED")
+        LIMIT 1
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("bucket_name", "STRING", event["bucket_name"]),
+            bigquery.ScalarQueryParameter("object_name", "STRING", event["object_name"]),
+            bigquery.ScalarQueryParameter(
+                "object_generation", "STRING", event.get("object_generation")
+            ),
+        ]
+    )
+    rows = list(bq_client.query(query, job_config=job_config).result())
+    return bool(rows)
 
 
 def find_matching_configs(object_name):
@@ -310,6 +339,7 @@ def insert_run_log(
         "event_id": event["event_id"],
         "bucket_name": event["bucket_name"],
         "object_name": event["object_name"],
+        "object_generation": event.get("object_generation"),
         "status": status,
         "message": message,
         "config_ids": [config["config_id"] for config in configs or []],
@@ -337,6 +367,9 @@ def import_file():
         if not object_name.startswith(LANDING_PREFIX):
             return jsonify({"status": "ignored", "reason": "object is not in landing"}), 200
 
+        if already_processed(event):
+            return jsonify({"status": "duplicate_ignored", "object": object_name}), 200
+
         configs = find_matching_configs(object_name)
         if not configs:
             message = f"No enabled ingestion config matched object: {object_name}"
@@ -352,7 +385,32 @@ def import_file():
             return jsonify({"status": "unknown_config", "message": message}), 200
 
         loaded_tables = process_file(bucket_name, object_name, configs)
-        move_to_processed(bucket_name, object_name)
+
+        try:
+            move_to_processed(bucket_name, object_name)
+        except Exception as exc:
+            message = (
+                "File was loaded into BigQuery, but moving the original object failed: "
+                f"{exc}"
+            )
+            insert_run_log(
+                run_id,
+                event,
+                "SUCCESS_MOVE_FAILED",
+                message,
+                started_at,
+                utc_now(),
+                configs=configs,
+                target_tables=loaded_tables,
+            )
+            app.logger.error(message)
+            return jsonify(
+                {
+                    "status": "success_move_failed",
+                    "message": message,
+                    "loaded_tables": loaded_tables,
+                }
+            ), 200
 
         message = "File processed successfully."
         insert_run_log(

@@ -118,3 +118,19 @@ Ha a feltöltött fájlra nincs engedélyezett config sor, akkor a service:
 - `UNKNOWN_CONFIG` statusszal logolja a futást.
 
 Ez szándékos. Jobb megállítani az ismeretlen inputot, mint csendben rossz táblába tölteni.
+
+## Miért kell idempotencia?
+
+A Pub/Sub legalább egyszer kézbesítési modellt használ. Ez azt jelenti, hogy ugyanaz az üzenet ritka esetben többször is megérkezhet, főleg akkor, ha a Cloud Run service hibával tér vissza.
+
+Ezért az importer a run logban ellenőrzi, hogy ugyanaz a Cloud Storage objektum és generáció sikeresen feldolgozódott-e már.
+
+Ha igen, akkor a duplikált üzenetet nem tölti be újra:
+
+```text
+duplicate_ignored
+```
+
+Fontos eset: ha a BigQuery betöltés sikerült, de az eredeti fájl `processed/` folderbe mozgatása hibára fut, a service nem ad vissza 500-as hibát. Ilyenkor `SUCCESS_MOVE_FAILED` státuszt logol, és 200-as választ ad a Pub/Subnak.
+
+Ennek oka, hogy egy Pub/Sub retry újra elindítaná a teljes feldolgozást, ami append típusú RAW tábláknál duplikált sorokat okozhatna.
