@@ -194,7 +194,7 @@ def insert_run_log(
         "bucket_name": bucket_name,
         "object_name": object_name,
         "row_count": row_count,
-        "filters": filters or {},
+        "filters": json.dumps(filters or {}, ensure_ascii=False),
         "requested_by": requested_by,
         "started_at": started_at.isoformat(),
         "finished_at": finished_at.isoformat(),
