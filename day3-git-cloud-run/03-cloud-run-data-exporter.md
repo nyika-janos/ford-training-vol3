@@ -186,8 +186,10 @@ Várható válasz:
 {
   "status": "success",
   "source_table": "ford-training-430008.janos_gold.sales_gold",
-  "row_count": 12,
-  "export_uri": "gs://training-jani/export/sales_gold_20260611T091530Z.xlsx"
+  "row_count": 150,
+  "export_uri": "gs://training-jani/export/sales_gold_20260611T091530Z.xlsx",
+  "run_log_table": "ford-training-430008.training_config.data_export_run_log",
+  "run_log_written": true
 }
 ```
 
@@ -268,6 +270,8 @@ filters
 
 # 11. Nézzük meg a run logot
 
+Fontos: ez nem Dataform run log. Ebbe a táblába csak a `data-exporter` Cloud Run service ír, tehát akkor jelenik meg benne sor, ha a fenti `curl -X POST "$SERVICE_URL"` hívás lefutott.
+
 BigQuery-ben:
 
 ```sql
@@ -292,6 +296,8 @@ Itt látszik:
 - hová ment az Excel fájl,
 - hány sor került bele,
 - milyen szűrőkkel indult.
+
+Ha az Excel fájl létrejött, de ez a tábla üres marad, nézzük meg a `curl` választ és a Cloud Run logokat. A service sikeres logírás esetén `run_log_written: true` mezőt ad vissza.
 
 ---
 

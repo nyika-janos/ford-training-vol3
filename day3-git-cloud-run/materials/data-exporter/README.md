@@ -117,6 +117,8 @@ A futások eredménye a következő táblába kerül:
 training_config.data_export_run_log
 ```
 
+Fontos: ez nem Dataform run log. A tábla csak akkor kap sort, amikor a `data-exporter` Cloud Run endpointot meghívjuk.
+
 Tipikus státuszok:
 
 ```text

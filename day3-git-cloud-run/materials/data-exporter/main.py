@@ -201,7 +201,7 @@ def insert_run_log(
     }
     errors = bq_client.insert_rows_json(run_log_table_id(), [row])
     if errors:
-        app.logger.error("Failed to insert export run log: %s", errors)
+        raise RuntimeError(f"Failed to insert export run log: {errors}")
 
 
 @app.route("/", methods=["POST"])
@@ -254,6 +254,8 @@ def export_gold():
                 "source_table": source_table,
                 "row_count": len(df.index),
                 "export_uri": f"gs://{bucket_name}/{object_name}",
+                "run_log_table": run_log_table_id(),
+                "run_log_written": True,
             }
         ), 200
 
