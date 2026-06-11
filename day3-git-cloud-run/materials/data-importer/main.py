@@ -72,6 +72,9 @@ def decode_pubsub_request(payload):
         or attributes.get("generation")
     )
 
+    if not object_generation and event.get("id"):
+        object_generation = str(event["id"]).rsplit("/", 1)[-1]
+
     if not bucket_name or not object_name:
         raise ValueError("Could not find bucket or object name in Pub/Sub message.")
 
@@ -382,6 +385,9 @@ def import_file():
 
         if not object_name.startswith(LANDING_PREFIX):
             return jsonify({"status": "ignored", "reason": "object is not in landing"}), 200
+
+        if Path(object_name).name == ".keep":
+            return jsonify({"status": "ignored", "reason": "placeholder object"}), 200
 
         if already_processed(event):
             return jsonify({"status": "duplicate_ignored", "object": object_name}), 200
