@@ -258,11 +258,11 @@ ford-training-vol3
 │
 ├── day3-git-cloud-run
 │   ├── 01-git-alapok.md
+│   ├── 02-cloud-run-data-importer.md
 │   └── materials
 │       └── data-importer
 │           ├── Dockerfile
 │           ├── README.md
-│           ├── create_sample_excel.py
 │           ├── main.py
 │           ├── requirements.txt
 │           ├── samples

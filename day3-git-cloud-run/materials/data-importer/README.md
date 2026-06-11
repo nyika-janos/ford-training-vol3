@@ -1,132 +1,122 @@
 # Data Importer Cloud Run
 
-Ez a minta Cloud Run service Pub/Sub push üzenetet fogad egy Cloud Storage file upload után.
+Ez a mappa egy konfigurációvezérelt Cloud Run importert tartalmaz.
 
-A feldolgozást BigQuery config tábla vezérli. A kód nem fixen egy fájlnévre vagy egy Excel sheetre van megírva, hanem a config alapján dönti el:
+A service célja, hogy a Cloud Storage `landing/` folderébe érkező fájlokat automatikusan feldolgozza, és a BigQuery RAW rétegbe töltse.
 
-- melyik fájlmintára reagáljon,
-- CSV vagy Excel formátumot várjon,
-- Excel esetén melyik sheetet olvassa,
-- melyik BigQuery RAW táblába töltsön,
-- append vagy truncate módban töltsön,
-- milyen oszlopokat várjon el,
-- milyen BigQuery sémával hozza létre a cél RAW táblát,
-- adjon-e technikai metadata oszlopokat a RAW rekordokhoz.
+---
 
-## Folder flow
+# Magas szintű működés
+
+```text
+User / Business team
+        |
+        | file upload
+        v
+Cloud Storage bucket
+landing/
+        |
+        | OBJECT_FINALIZE notification
+        v
+Pub/Sub topic
+        |
+        | push subscription
+        v
+Cloud Run Data Importer
+        |
+        | reads config
+        v
+BigQuery config table
+        |
+        | load data
+        v
+BigQuery RAW tables
+```
+
+A Python kód nem konkrét fájlnevekre van írva. Azt, hogy egy fájllal mit kell csinálni, a BigQuery config tábla mondja meg.
+
+---
+
+# Folder flow
+
+A bucketben négy logikai foldert használunk:
 
 ```text
 landing/
-   új fájlok
+  ide érkeznek az új fájlok
 
 processed/
-   sikeresen feldolgozott fájlok
+  ide kerülnek a sikeresen feldolgozott fájlok
 
 archive/
-   sikeres feldolgozás után megtartott eredeti másolat
+  ide kerül egy sikeres feldolgozás utáni biztonsági másolat
 
 error/
-   sikertelen vagy ismeretlen configú fájlok
+  ide kerülnek az ismeretlen vagy hibás fájlok
 ```
 
-Sikeres feldolgozás után a `processed/` és `archive/` alá kerülő fájlok UTC timestamp postfixet kapnak, hogy az azonos nevű későbbi feltöltések ne írják felül a korábbi példányokat.
+Cloud Storage-ban ezek technikailag nem valódi mappák, hanem objektumnév-prefixek. A `.keep` fájl csak arra szolgál, hogy az üres prefixek is látszódjanak a Console felületén.
+
+Sikeres feldolgozás után a `processed/` és `archive/` alatti fájlok UTC timestamp postfixet kapnak:
+
+```text
+landing/monthly_sales.xlsx
+        |
+        v
+processed/monthly_sales_20260611T091530Z.xlsx
+archive/monthly_sales_20260611T091530Z.xlsx
+```
+
+Így egy későbbi, azonos nevű feltöltés nem írja felül a korábbi példányt.
+
+---
+
+# Config-alapú feldolgozás
+
+A config tábla neve:
+
+```text
+training_config.file_ingestion_config
+```
+
+Egy config sor azt írja le, hogy egy adott fájlmintával mit kell csinálni.
+
+Fontos mezők:
+
+```text
+file_pattern       milyen fájlnévre illeszkedik a szabály
+source_format      CSV vagy XLSX
+sheet_name         Excel esetén melyik sheetet kell olvasni
+target_dataset     melyik BigQuery datasetbe töltünk
+target_table       melyik RAW táblába töltünk
+write_disposition  append vagy truncate mód
+expected_columns   milyen oszlopokat várunk a forrásban
+target_schema      milyen BigQuery sémával jöjjön létre a cél tábla
+```
 
 Példa:
 
 ```text
 landing/monthly_sales.xlsx
-        ↓
-processed/monthly_sales_20260611T091530Z.xlsx
-archive/monthly_sales_20260611T091530Z.xlsx
 ```
 
-## Cloud Run environment variables
+Erre három config sor illeszkedik:
 
 ```text
-PROJECT_ID=ford-training-430008
-CONFIG_DATASET=training_config
-CONFIG_TABLE=file_ingestion_config
-RUN_LOG_TABLE=file_ingestion_run_log
-LANDING_PREFIX=landing/
-PROCESSED_PREFIX=processed/
-ARCHIVE_PREFIX=archive/
-ERROR_PREFIX=error/
-ARCHIVE_SUCCESS_COPY=true
+Sales sheet       -> janos_raw.sales
+Dealers sheet     -> janos_raw.dealer_master
+MLI Mapping sheet -> janos_raw.mli_mapping
 ```
 
-## Pub/Sub message
+Ezért egyetlen Excel fájlból három BigQuery RAW tábla is betölthető.
 
-A service Pub/Sub push envelope-ot vár. A `message.data` mezőben a Cloud Storage notification JSON szerepel base64 kódolva.
+---
 
-Minimális példa dekódolt tartalomra:
+# RAW tábla létrehozása
 
-```json
-{
-  "bucket": "my-training-bucket",
-  "name": "landing/sales_data.csv"
-}
-```
+A RAW táblákat az importer hozza létre, ha még nem léteznek.
 
-## Cloud Storage notification
-
-A bucket notificationt érdemes prefixszel létrehozni, hogy csak a `landing/` folderbe érkező új fájlokról menjen Pub/Sub üzenet.
-
-```bash
-gsutil notification create \
-  -t file-upload-topic \
-  -f json \
-  -e OBJECT_FINALIZE \
-  -p landing/ \
-  gs://<bucket-name>
-```
-
-Prefix nélkül a `processed/`, `archive/` és `error/` alá létrejövő objektumok is Pub/Sub üzenetet generálnak. A program ezeket ugyan ignorálja, de felesleges Cloud Run hívásokat és zavaró logokat okoz.
-
-Ha korábban prefix nélkül hoztad létre a notificationt, először listázd ki:
-
-```bash
-gsutil notification list gs://<bucket-name>
-```
-
-Majd töröld a prefix nélküli notificationt:
-
-```bash
-gsutil notification delete <notification-id> gs://<bucket-name>
-```
-
-Ezután hozd létre újra a `-p landing/` kapcsolóval.
-
-## Pub/Sub ack deadline
-
-A Pub/Sub push subscription alapértelmezett ack deadline értéke gyakran 10 másodperc. Ha a Cloud Run feldolgozás ennél tovább tart, a Pub/Sub ugyanazt az üzenetet még az első futás közben újraküldheti.
-
-Import folyamatoknál érdemes nagyobb értéket beállítani:
-
-```bash
-gcloud pubsub subscriptions update file-upload-to-importer \
-  --ack-deadline=120
-```
-
-Ez nem helyettesíti az idempotens kódot, de csökkenti a felesleges párhuzamos újrakézbesítések esélyét.
-
-## Config modell
-
-Egy config sor egy file pattern és egy cél RAW tábla közötti megfeleltetés.
-
-Excel fájloknál egy fájlhoz több config sor is tartozhat, például:
-
-```text
-landing/monthly_input.xlsx + Sales sheet   -> janos_raw.sales
-landing/monthly_input.xlsx + Dealers sheet -> janos_raw.dealer_master
-```
-
-CSV esetén a `sheet_name` értéke `NULL`.
-
-## Ki hozza létre a RAW táblákat?
-
-A minta program a config tábla `target_schema` oszlopa alapján létrehozza a cél BigQuery táblát, ha az még nem létezik.
-
-Példa config részlet:
+Ehhez a config tábla `target_schema` mezőjét használja:
 
 ```sql
 [
@@ -135,7 +125,9 @@ Példa config részlet:
 ]
 ```
 
-Az importer ehhez automatikusan hozzáadja a technikai oszlopokat is:
+A tréningben a RAW üzleti oszlopokat szándékosan `STRING` típusként töltjük be. A típuskonverzió és tisztítás később a BigQuery/Dataform rétegek feladata.
+
+Az importer technikai oszlopokat is hozzáad:
 
 ```text
 _source_bucket
@@ -144,50 +136,101 @@ _ingestion_config_id
 _ingested_at_utc
 ```
 
-Ha nincs `target_schema`, akkor a program BigQuery autodetect módra vált. A tréningben viszont a config-alapú séma a javasolt út, mert így látható, hogy a betöltés nem Python kód módosításával, hanem konfigurációval vezérelhető.
+Ezek segítenek visszakeresni, hogy egy RAW rekord melyik fájlból és melyik config szabály alapján érkezett.
 
-## Sample Excel létrehozása
+---
 
-A repositoryban CSV minták vannak, és adtunk mellé egy kis segédscriptet is.
+# Pub/Sub üzenet
 
-Ha lokálisan telepítve vannak a `requirements.txt` csomagjai, akkor ebből létrehozható egy két sheetes Excel:
+A Cloud Run service Pub/Sub push üzenetet kap.
 
-```bash
-python create_sample_excel.py
+A Pub/Sub üzenet `message.data` mezője base64-kódolt Cloud Storage object JSON.
+
+Példa dekódolt tartalom:
+
+```json
+{
+  "bucket": "training-jani",
+  "name": "landing/monthly_sales.xlsx",
+  "generation": "1781164833074224"
+}
 ```
 
-Az eredmény:
+Az importer ebből olvassa ki:
 
 ```text
-samples/monthly_sales.xlsx
+bucket_name
+object_name
+object_generation
 ```
 
-## Ismeretlen fajl
+Ezután az `object_name` értékét összeveti a config tábla `file_pattern` mezőivel.
 
-Ha a feltöltött fájlra nincs engedélyezett config sor, akkor a service:
+---
 
-- nem tölti be BigQuery-be,
-- átmozgatja az `error/` folderbe,
-- `UNKNOWN_CONFIG` statusszal logolja a futást.
+# Idempotencia
 
-Ez szándékos. Jobb megállítani az ismeretlen inputot, mint csendben rossz táblába tölteni.
+Pub/Sub esetén fontos szabály:
 
-## Miért kell idempotencia?
+> Pub/Sub at-least-once delivery modellt használ.
 
-A Pub/Sub legalább egyszer kézbesítési modellt használ. Ez azt jelenti, hogy ugyanaz az üzenet ritka esetben többször is megérkezhet, főleg akkor, ha a Cloud Run service hibával tér vissza.
+Ez azt jelenti, hogy ugyanaz az üzenet ritka esetben többször is megérkezhet.
 
-Ezért az importer a run logban ellenőrzi, hogy ugyanaz a Cloud Storage objektum és generáció sikeresen feldolgozódott-e már.
+Ezért az importer több védelmet is használ:
 
-Ha igen, akkor a duplikált üzenetet nem tölti be újra:
+- a run log alapján ellenőrzi, hogy ugyanaz az objektumgeneráció sikeresen feldolgozódott-e már,
+- determinisztikus BigQuery load job ID-t használ,
+- a nem `landing/` alatti objektumokat ignorálja,
+- a `.keep` placeholder fájlokat ignorálja,
+- ha a forrásfájl már eltűnt, `SOURCE_MISSING` státusszal 200-as választ ad.
+
+Ez különösen fontos `WRITE_APPEND` betöltéseknél, mert ott egy duplikált futás duplikált rekordokat okozhatna.
+
+---
+
+# Run log
+
+A futások eredménye a következő táblába kerül:
 
 ```text
-duplicate_ignored
+training_config.file_ingestion_run_log
 ```
 
-Emellett minden BigQuery load job determinisztikus job ID-t kap a bucket, objektumnév, objektumgeneráció és config ID alapján. Ez azért fontos, mert két nagyon közeli időpontban érkező duplikált Cloud Run hívás még azelőtt elindulhat, hogy az első futás SUCCESS státuszt írna a run logba.
+Tipikus státuszok:
 
-Ilyenkor a BigQuery job ID akadályozza meg, hogy ugyanaz a fájl ugyanazzal a config sorral kétszer töltődjön be.
+```text
+SUCCESS
+SUCCESS_MOVE_FAILED
+UNKNOWN_CONFIG
+SOURCE_MISSING
+FAILED
+```
 
-Fontos eset: ha a BigQuery betöltés sikerült, de az eredeti fájl `processed/` folderbe mozgatása hibára fut, a service nem ad vissza 500-as hibát. Ilyenkor `SUCCESS_MOVE_FAILED` státuszt logol, és 200-as választ ad a Pub/Subnak.
+A run log célja, hogy oktatás és hibakeresés közben látható legyen:
 
-Ennek oka, hogy egy Pub/Sub retry újra elindítaná a teljes feldolgozást, ami append típusú RAW tábláknál duplikált sorokat okozhatna.
+- melyik fájl indította a futást,
+- melyik config sorok illeszkedtek,
+- melyik táblákba történt betöltés,
+- mi lett a feldolgozás eredménye.
+
+---
+
+# Mintafájlok
+
+A `samples/` mappa tartalma:
+
+```text
+sales_data.csv
+dealer_master.csv
+monthly_sales.xlsx
+```
+
+A `monthly_sales.xlsx` három sheetet tartalmaz:
+
+```text
+Sales
+Dealers
+MLI Mapping
+```
+
+Ezek a minták elegendők a CSV és Excel alapú betöltés bemutatásához.

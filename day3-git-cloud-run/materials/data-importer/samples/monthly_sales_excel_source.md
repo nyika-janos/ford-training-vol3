@@ -2,18 +2,6 @@
 
 A `monthly_sales.xlsx` egy három sheetes minta Excel fájl.
 
-A tényleges `.xlsx` fájl a `create_sample_excel.py` scriptből állítható elő:
-
-```bash
-python create_sample_excel.py
-```
-
-Az eredmény:
-
-```text
-samples/monthly_sales.xlsx
-```
-
 Feltöltéskor ezt a nevet érdemes használni:
 
 ```text
