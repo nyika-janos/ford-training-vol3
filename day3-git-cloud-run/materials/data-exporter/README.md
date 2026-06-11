@@ -48,8 +48,8 @@ Opcionális kérés:
 ```json
 {
   "requested_by": "manual-training-test",
-  "export_name": "sales_gold_hungary.xlsx",
-  "market": "Hungary"
+  "export_name": "sales_gold_hu.xlsx",
+  "market": "HU"
 }
 ```
 
@@ -57,8 +57,8 @@ Több értékes szűrés:
 
 ```json
 {
-  "market": ["Hungary", "Austria"],
-  "segment": ["SUV", "Commercial"]
+  "market": ["HU", "CZ"],
+  "segment": ["Passenger Car", "Crossover"]
 }
 ```
 

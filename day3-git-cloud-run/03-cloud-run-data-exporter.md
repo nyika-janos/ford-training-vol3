@@ -204,8 +204,8 @@ curl -X POST "$SERVICE_URL" \
   -H "Content-Type: application/json" \
   -d '{
     "requested_by": "manual-test",
-    "export_name": "sales_gold_hungary.xlsx",
-    "market": "Hungary"
+    "export_name": "sales_gold_hu.xlsx",
+    "market": "HU"
   }'
 ```
 
@@ -216,8 +216,8 @@ curl -X POST "$SERVICE_URL" \
   -H "Content-Type: application/json" \
   -d '{
     "export_name": "sales_gold_suv.xlsx",
-    "market": ["Hungary", "Austria"],
-    "segment": "SUV"
+    "market": ["HU", "CZ"],
+    "segment": ["Passenger Car", "Crossover"]
   }'
 ```
 
@@ -242,7 +242,7 @@ gsutil ls gs://$BUCKET_NAME/export/
 Letöltés teszthez:
 
 ```bash
-gsutil cp gs://$BUCKET_NAME/export/sales_gold_hungary.xlsx .
+gsutil cp gs://$BUCKET_NAME/export/sales_gold_hu.xlsx .
 ```
 
 Az Excel két sheetet tartalmaz:
