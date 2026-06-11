@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 import os
 import tempfile
@@ -11,6 +12,7 @@ import pandas as pd
 from flask import Flask, jsonify, request
 from google.cloud import bigquery
 from google.cloud import storage
+from google.api_core.exceptions import Conflict
 
 
 app = Flask(__name__)
@@ -295,22 +297,53 @@ def read_csv_file(file_path, config):
     )
 
 
-def load_dataframe_to_bigquery(df, config):
+def make_load_job_id(bucket_name, object_name, object_generation, config_id):
+    dedup_key = "|".join(
+        [
+            bucket_name,
+            object_name,
+            object_generation or "no_generation",
+            config_id,
+        ]
+    )
+    digest = hashlib.sha256(dedup_key.encode("utf-8")).hexdigest()
+    return f"file_import_{digest}"
+
+
+def load_dataframe_to_bigquery(df, config, event):
     table_id = target_table_id(config)
     write_disposition = config.get("write_disposition") or "WRITE_APPEND"
     schema = configured_schema_fields(config)
+    job_id = make_load_job_id(
+        event["bucket_name"],
+        event["object_name"],
+        event.get("object_generation"),
+        config["config_id"],
+    )
 
     job_config = bigquery.LoadJobConfig(
         write_disposition=write_disposition,
         autodetect=not bool(schema),
         schema=schema or None,
     )
-    load_job = bq_client.load_table_from_dataframe(df, table_id, job_config=job_config)
+
+    try:
+        load_job = bq_client.load_table_from_dataframe(
+            df,
+            table_id,
+            job_config=job_config,
+            job_id=job_id,
+        )
+    except Conflict:
+        load_job = bq_client.get_job(job_id)
+
     load_job.result()
     return table_id, len(df.index)
 
 
-def process_file(bucket_name, object_name, configs):
+def process_file(event, configs):
+    bucket_name = event["bucket_name"]
+    object_name = event["object_name"]
     tmp_path = download_to_tmp(bucket_name, object_name)
     loaded_tables = []
 
@@ -334,7 +367,7 @@ def process_file(bucket_name, object_name, configs):
             if config.get("add_metadata_columns", True):
                 df = add_metadata_columns(df, bucket_name, object_name, config["config_id"])
 
-            table_id, row_count = load_dataframe_to_bigquery(df, config)
+            table_id, row_count = load_dataframe_to_bigquery(df, config, event)
             loaded_tables.append(f"{table_id} ({row_count} rows)")
 
         return loaded_tables
@@ -406,7 +439,7 @@ def import_file():
             )
             return jsonify({"status": "unknown_config", "message": message}), 200
 
-        loaded_tables = process_file(bucket_name, object_name, configs)
+        loaded_tables = process_file(event, configs)
 
         try:
             move_to_processed(bucket_name, object_name)

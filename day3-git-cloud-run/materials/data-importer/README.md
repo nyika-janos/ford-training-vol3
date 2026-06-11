@@ -171,6 +171,10 @@ Ha igen, akkor a duplikált üzenetet nem tölti be újra:
 duplicate_ignored
 ```
 
+Emellett minden BigQuery load job determinisztikus job ID-t kap a bucket, objektumnév, objektumgeneráció és config ID alapján. Ez azért fontos, mert két nagyon közeli időpontban érkező duplikált Cloud Run hívás még azelőtt elindulhat, hogy az első futás SUCCESS státuszt írna a run logba.
+
+Ilyenkor a BigQuery job ID akadályozza meg, hogy ugyanaz a fájl ugyanazzal a config sorral kétszer töltődjön be.
+
 Fontos eset: ha a BigQuery betöltés sikerült, de az eredeti fájl `processed/` folderbe mozgatása hibára fut, a service nem ad vissza 500-as hibát. Ilyenkor `SUCCESS_MOVE_FAILED` státuszt logol, és 200-as választ ad a Pub/Subnak.
 
 Ennek oka, hogy egy Pub/Sub retry újra elindítaná a teljes feldolgozást, ami append típusú RAW tábláknál duplikált sorokat okozhatna.
