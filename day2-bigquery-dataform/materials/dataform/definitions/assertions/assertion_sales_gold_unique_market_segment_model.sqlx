@@ -1,0 +1,15 @@
+config {
+  type: "assertion"
+}
+
+SELECT
+    market,
+    segment,
+    model,
+    COUNT(*) AS cnt
+FROM ${ref("sales_gold")}
+GROUP BY
+    market,
+    segment,
+    model
+HAVING COUNT(*) > 1

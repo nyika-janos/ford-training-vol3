@@ -1,0 +1,5 @@
+defaultProject: ford-training-430008
+defaultLocation: europe-west4
+defaultAssertionDataset: assertions
+vars:
+  username: "janos"

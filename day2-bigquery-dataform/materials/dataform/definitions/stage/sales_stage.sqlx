@@ -1,0 +1,21 @@
+config {
+  type: "table",
+  schema: require("../../includes/config").stage_dataset,
+  name: "sales_stage"
+}
+
+js {
+  const {
+    raw_dataset
+  } = require("../../includes/config");
+}
+
+SELECT DISTINCT
+    UPPER(TRIM(market)) AS market,
+    TRIM(dealer_code) AS dealer_code,
+    SAFE_CAST(sales_date AS DATE) AS sales_date,
+    TRIM(model) AS model,
+    SAFE_CAST(units AS INT64) AS units,
+    SAFE_CAST(revenue AS NUMERIC) AS revenue
+FROM `${raw_dataset}.sales`
+WHERE dealer_code IS NOT NULL

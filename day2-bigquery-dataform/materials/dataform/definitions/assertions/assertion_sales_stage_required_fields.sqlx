@@ -1,0 +1,11 @@
+config {
+  type: "assertion"
+}
+
+SELECT *
+FROM ${ref("sales_stage")}
+WHERE
+    market IS NULL
+    OR dealer_code IS NULL
+    OR sales_date IS NULL
+    OR model IS NULL

@@ -1,0 +1,18 @@
+config {
+  type: "table",
+  schema: require("../../includes/config").stage_dataset,
+  name: "mapping_stage"
+}
+
+js {
+  const {
+    raw_dataset
+  } = require("../../includes/config");
+}
+
+SELECT DISTINCT
+    TRIM(model) AS model,
+    TRIM(mli_code) AS mli_code,
+    TRIM(segment) AS segment
+FROM `${raw_dataset}.mli_mapping`
+WHERE model IS NOT NULL

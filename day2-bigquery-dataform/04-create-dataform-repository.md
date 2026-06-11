@@ -8,6 +8,12 @@ We will not write SQL from scratch.
 
 Instead, we will use a pre-built repository structure that already contains the Dataform models we will use throughout the training.
 
+The prepared repository files are available in this training repository under:
+
+```text
+day2-bigquery-dataform/materials/dataform
+```
+
 At the end of this exercise you will have:
 
 ```text

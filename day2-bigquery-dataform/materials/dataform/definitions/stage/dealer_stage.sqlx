@@ -1,0 +1,19 @@
+config {
+  type: "table",
+  schema: require("../../includes/config").stage_dataset,
+  name: "dealer_stage"
+}
+
+js {
+  const {
+    raw_dataset
+  } = require("../../includes/config");
+}
+
+SELECT DISTINCT
+    TRIM(dealer_code) AS dealer_code,
+    TRIM(dealer_name) AS dealer_name,
+    UPPER(TRIM(market)) AS market,
+    TRIM(city) AS city
+FROM `${raw_dataset}.dealer_master`
+WHERE dealer_code IS NOT NULL

@@ -1,0 +1,10 @@
+config {
+  type: "assertion"
+}
+
+SELECT *
+FROM ${ref("sales_gold")}
+WHERE
+    total_units <= 0
+    OR total_revenue <= 0
+    OR average_unit_revenue <= 0

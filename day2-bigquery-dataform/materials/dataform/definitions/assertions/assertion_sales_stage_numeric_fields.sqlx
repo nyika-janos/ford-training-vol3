@@ -1,0 +1,11 @@
+config {
+  type: "assertion"
+}
+
+SELECT *
+FROM ${ref("sales_stage")}
+WHERE
+    units IS NULL
+    OR revenue IS NULL
+    OR units <= 0
+    OR revenue <= 0
