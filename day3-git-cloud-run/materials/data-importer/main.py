@@ -143,6 +143,14 @@ def object_target_name(source_name, target_prefix):
     return f"{target_prefix}{source_path.name}"
 
 
+def timestamped_object_target_name(source_name, target_prefix):
+    source_path = Path(source_name)
+    target_prefix = normalize_prefix(target_prefix)
+    timestamp = utc_now().strftime("%Y%m%dT%H%M%SZ")
+    target_name = f"{source_path.stem}_{timestamp}{source_path.suffix}"
+    return f"{target_prefix}{target_name}"
+
+
 def copy_blob(bucket_name, source_name, target_name):
     bucket = storage_client.bucket(bucket_name)
     source_blob = bucket.blob(source_name)
@@ -160,8 +168,16 @@ def move_to_error(bucket_name, object_name):
 
 def move_to_processed(bucket_name, object_name):
     if ARCHIVE_SUCCESS_COPY:
-        copy_blob(bucket_name, object_name, object_target_name(object_name, ARCHIVE_PREFIX))
-    move_blob(bucket_name, object_name, object_target_name(object_name, PROCESSED_PREFIX))
+        copy_blob(
+            bucket_name,
+            object_name,
+            timestamped_object_target_name(object_name, ARCHIVE_PREFIX),
+        )
+    move_blob(
+        bucket_name,
+        object_name,
+        timestamped_object_target_name(object_name, PROCESSED_PREFIX),
+    )
 
 
 def download_to_tmp(bucket_name, object_name):

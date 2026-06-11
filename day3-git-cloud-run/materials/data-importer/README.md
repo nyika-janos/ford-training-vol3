@@ -29,6 +29,17 @@ error/
    sikertelen vagy ismeretlen configú fájlok
 ```
 
+Sikeres feldolgozás után a `processed/` és `archive/` alá kerülő fájlok UTC timestamp postfixet kapnak, hogy az azonos nevű későbbi feltöltések ne írják felül a korábbi példányokat.
+
+Példa:
+
+```text
+landing/monthly_sales.xlsx
+        ↓
+processed/monthly_sales_20260611T091530Z.xlsx
+archive/monthly_sales_20260611T091530Z.xlsx
+```
+
 ## Cloud Run environment variables
 
 ```text
@@ -55,6 +66,35 @@ Minimális példa dekódolt tartalomra:
   "name": "landing/sales_data.csv"
 }
 ```
+
+## Cloud Storage notification
+
+A bucket notificationt érdemes prefixszel létrehozni, hogy csak a `landing/` folderbe érkező új fájlokról menjen Pub/Sub üzenet.
+
+```bash
+gsutil notification create \
+  -t file-upload-topic \
+  -f json \
+  -e OBJECT_FINALIZE \
+  -p landing/ \
+  gs://<bucket-name>
+```
+
+Prefix nélkül a `processed/`, `archive/` és `error/` alá létrejövő objektumok is Pub/Sub üzenetet generálnak. A program ezeket ugyan ignorálja, de felesleges Cloud Run hívásokat és zavaró logokat okoz.
+
+Ha korábban prefix nélkül hoztad létre a notificationt, először listázd ki:
+
+```bash
+gsutil notification list gs://<bucket-name>
+```
+
+Majd töröld a prefix nélküli notificationt:
+
+```bash
+gsutil notification delete <notification-id> gs://<bucket-name>
+```
+
+Ezután hozd létre újra a `-p landing/` kapcsolóval.
 
 ## Config modell
 
