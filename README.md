@@ -155,14 +155,17 @@ Topics:
 - Cloud Run Jobs
 - Event-driven processing
 - Python-based integrations
+- Manual HTTP-triggered services for later orchestration
 
 Hands-on exercises:
 
+- Use Git and Cloud Shell for the training repository
 - Deploy a Cloud Run service
-- Read Excel files
-- Load data into BigQuery
-- Export data from BigQuery
 - Connect Pub/Sub events to Cloud Run
+- Read CSV and Excel files from Cloud Storage
+- Load landing-zone files into BigQuery RAW tables
+- Export BigQuery GOLD data into Excel
+- Write importer and exporter run logs
 
 End result:
 
@@ -176,7 +179,20 @@ Pub/Sub
 Cloud Run
    ↓
 BigQuery
+   ↓
+Dataform GOLD
+   ↓
+Cloud Run
+   ↓
+Excel export
 ```
+
+Day 3 contains two Cloud Run service patterns:
+
+- `data-importer`: event-driven service started by Pub/Sub when a file arrives in the bucket `landing/` folder.
+- `data-exporter`: HTTP-triggered service that exports `sales_gold` from BigQuery to an Excel file in the bucket `export/` folder.
+
+The exporter is intentionally called manually with `curl` during Day 3. This keeps the service easy to understand before Day 4 introduces Airflow orchestration.
 
 ---
 
@@ -221,6 +237,8 @@ Gold Layer
 Export
 ```
 
+Day 4 connects the pieces from the first three days. Airflow will be used to coordinate the order of operations: refresh the BigQuery/Dataform layers, call Cloud Run services such as the data exporter, monitor results and make retry/error handling visible in one orchestration layer.
+
 ---
 
 # Repository Structure
@@ -260,13 +278,20 @@ ford-training-vol3
 ├── day3-git-cloud-run
 │   ├── 01-git-alapok.md
 │   ├── 02-cloud-run-data-importer.md
+│   ├── 03-cloud-run-data-exporter.md
 │   └── materials
-│       └── data-importer
+│       ├── data-importer
+│       │   ├── Dockerfile
+│       │   ├── README.md
+│       │   ├── main.py
+│       │   ├── requirements.txt
+│       │   ├── samples
+│       │   └── sql
+│       └── data-exporter
 │           ├── Dockerfile
 │           ├── README.md
 │           ├── main.py
 │           ├── requirements.txt
-│           ├── samples
 │           └── sql
 │
 └── day4-composer

@@ -217,7 +217,7 @@ Példa több szűrővel:
 curl -X POST "$SERVICE_URL" \
   -H "Content-Type: application/json" \
   -d '{
-    "export_name": "sales_gold_suv.xlsx",
+    "export_name": "sales_gold_passenger_crossover.xlsx",
     "market": ["HU", "CZ"],
     "segment": ["Passenger Car", "Crossover"]
   }'

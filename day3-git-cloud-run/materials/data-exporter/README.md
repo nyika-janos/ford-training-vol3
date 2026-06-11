@@ -57,6 +57,7 @@ Több értékes szűrés:
 
 ```json
 {
+  "export_name": "sales_gold_passenger_crossover.xlsx",
   "market": ["HU", "CZ"],
   "segment": ["Passenger Car", "Crossover"]
 }
@@ -69,6 +70,22 @@ market
 segment
 model
 ```
+
+Sikeres válasz példa:
+
+```json
+{
+  "status": "success",
+  "run_id": "18aca2b6-8167-4ee7-88b4-065e5063d4fa",
+  "source_table": "ford-training-430008.janos_gold.sales_gold",
+  "row_count": 10,
+  "export_uri": "gs://training-jani/export/sales_gold_passenger_crossover.xlsx",
+  "run_log_table": "ford-training-430008.training_config.data_export_run_log",
+  "run_log_written": true
+}
+```
+
+A `run_log_written: true` azt jelzi, hogy az export eredménye bekerült a BigQuery run log táblába is.
 
 ---
 
@@ -118,6 +135,8 @@ training_config.data_export_run_log
 ```
 
 Fontos: ez nem Dataform run log. A tábla csak akkor kap sort, amikor a `data-exporter` Cloud Run endpointot meghívjuk.
+
+A `filters` oszlop BigQuery `JSON` típusú mezőként tárolja, hogy milyen `market`, `segment` vagy `model` szűrőkkel indult a futás.
 
 Tipikus státuszok:
 
