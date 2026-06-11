@@ -96,6 +96,19 @@ gsutil notification delete <notification-id> gs://<bucket-name>
 
 Ezután hozd létre újra a `-p landing/` kapcsolóval.
 
+## Pub/Sub ack deadline
+
+A Pub/Sub push subscription alapértelmezett ack deadline értéke gyakran 10 másodperc. Ha a Cloud Run feldolgozás ennél tovább tart, a Pub/Sub ugyanazt az üzenetet még az első futás közben újraküldheti.
+
+Import folyamatoknál érdemes nagyobb értéket beállítani:
+
+```bash
+gcloud pubsub subscriptions update file-upload-to-importer \
+  --ack-deadline=120
+```
+
+Ez nem helyettesíti az idempotens kódot, de csökkenti a felesleges párhuzamos újrakézbesítések esélyét.
+
 ## Config modell
 
 Egy config sor egy file pattern és egy cél RAW tábla közötti megfeleltetés.

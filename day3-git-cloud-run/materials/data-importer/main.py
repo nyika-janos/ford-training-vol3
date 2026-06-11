@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pandas as pd
 from flask import Flask, jsonify, request
+from google.api_core.exceptions import Conflict, NotFound
 from google.cloud import bigquery
 from google.cloud import storage
-from google.api_core.exceptions import Conflict
 
 
 app = Flask(__name__)
@@ -335,10 +335,10 @@ def load_dataframe_to_bigquery(df, config, event):
             job_id=job_id,
         )
     except Conflict:
-        load_job = bq_client.get_job(job_id)
+        return table_id, 0, True
 
     load_job.result()
-    return table_id, len(df.index)
+    return table_id, len(df.index), False
 
 
 def process_file(event, configs):
@@ -367,8 +367,11 @@ def process_file(event, configs):
             if config.get("add_metadata_columns", True):
                 df = add_metadata_columns(df, bucket_name, object_name, config["config_id"])
 
-            table_id, row_count = load_dataframe_to_bigquery(df, config, event)
-            loaded_tables.append(f"{table_id} ({row_count} rows)")
+            table_id, row_count, skipped = load_dataframe_to_bigquery(df, config, event)
+            if skipped:
+                loaded_tables.append(f"{table_id} (duplicate load job skipped)")
+            else:
+                loaded_tables.append(f"{table_id} ({row_count} rows)")
 
         return loaded_tables
     finally:
@@ -439,7 +442,23 @@ def import_file():
             )
             return jsonify({"status": "unknown_config", "message": message}), 200
 
-        loaded_tables = process_file(event, configs)
+        try:
+            loaded_tables = process_file(event, configs)
+        except NotFound as exc:
+            message = (
+                "Source object was not found. This usually means a duplicate Pub/Sub "
+                f"delivery arrived after another invocation moved the file: {exc}"
+            )
+            insert_run_log(
+                run_id,
+                event,
+                "SOURCE_MISSING",
+                message,
+                started_at,
+                utc_now(),
+                configs=configs,
+            )
+            return jsonify({"status": "source_missing", "message": message}), 200
 
         try:
             move_to_processed(bucket_name, object_name)
