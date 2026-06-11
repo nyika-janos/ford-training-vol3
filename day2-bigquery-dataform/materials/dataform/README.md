@@ -94,3 +94,26 @@ GOLD
 ```
 
 Ezek célja, hogy ne csak a transzformáció lefutását mutassuk meg, hanem azt is, hogyan lehet Dataformmal adatminőségi kapukat építeni a pipeline-ba.
+
+## Demo reset
+
+Demó előtt a BigQuery táblák tiszta állapotba hozhatók ezzel a scripttel:
+
+```text
+sql/reset_demo_tables.sql
+```
+
+A script:
+
+- truncate-eli a `training_config.file_ingestion_run_log` táblát,
+- eldobja az importer által újragenerálható RAW táblákat,
+- eldobja a Dataform által újragenerálható stage, intermediate és gold táblákat,
+- eldobja a Dataform assertion view-kat.
+
+Alapértelmezett felhasználó:
+
+```sql
+DECLARE username STRING DEFAULT "janos";
+```
+
+Más résztvevő esetén ezt az értéket kell átírni.
