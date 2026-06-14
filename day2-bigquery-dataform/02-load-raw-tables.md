@@ -1,10 +1,10 @@
-# 02 - Load RAW Tables
+# 02 - RAW table-ök betöltése
 
-## Objective
+## Cél
 
-In this exercise you will load the source files into the RAW layer of the data warehouse.
+Ebben a gyakorlatban betöltöd a source fájlokat a data warehouse RAW layerébe.
 
-At the end of this exercise you will have the following tables:
+A gyakorlat végére az alábbi table-ökkel fogsz rendelkezni:
 
 ```text
 <your_name>_raw.mli_mapping
@@ -12,33 +12,33 @@ At the end of this exercise you will have the following tables:
 <your_name>_raw.sales_data
 ```
 
-These tables will be the starting point of our Dataform pipeline.
+Ezek a table-ök lesznek a Dataform pipeline kiindulópontjai.
 
 ---
 
-## Why are we doing this?
+## Miért csináljuk ezt?
 
-Yesterday we learned how files arrive in Cloud Storage.
+Tegnap megtanultuk, hogyan érkeznek meg a fájlok a Cloud Storage-ba.
 
-Today we will focus on the warehouse side.
+Ma a warehouse oldalára koncentrálunk.
 
-In a real-world solution the files would be loaded automatically by Cloud Run.
+Egy valós solutionben a Cloud Run automatikusan betöltené a fájlokat.
 
-For today's exercise we will perform the loading manually so we can focus on:
+A mai gyakorlatban manuálisan végezzük el a betöltést, hogy az alábbiakra összpontosíthassunk:
 
 - BigQuery
 - Warehouse layers
 - Dataform
 
-without introducing additional components.
+anélkül, hogy további componenteket vezetnénk be.
 
-Our goal is to simulate the state where the ingestion process has already completed successfully.
+A célunk annak az állapotnak a szimulálása, amelyben az ingestion process már sikeresen befejeződött.
 
 ---
 
-# Source Files
+# Source fájlok
 
-You should have received the following files:
+Az alábbi fájlokat kellett megkapnod:
 
 ```text
 mli_mapping.csv
@@ -46,21 +46,21 @@ dealer_master.csv
 sales_data.csv
 ```
 
-These files represent:
+Ezek a fájlok a következőket tartalmazzák:
 
-| File | Description |
+| Fájl | Leírás |
 |--------|--------|
 | mli_mapping.csv | Product classification mapping |
 | dealer_master.csv | Dealer master data |
-| sales_data.csv | Sales transactions |
+| sales_data.csv | Sales transactionök |
 
 ---
 
-# Load mli_mapping.csv
+# Az mli_mapping.csv betöltése
 
-## Step 1
+## 1. lépés
 
-Open:
+Nyisd meg:
 
 ```text
 BigQuery Studio
@@ -68,11 +68,11 @@ BigQuery Studio
 
 ---
 
-## Step 2
+## 2. lépés
 
-Expand your RAW dataset.
+Nyisd le a RAW datasetedet.
 
-Example:
+Példa:
 
 ```text
 janos_raw
@@ -80,9 +80,9 @@ janos_raw
 
 ---
 
-## Step 3
+## 3. lépés
 
-Click:
+Kattints erre:
 
 ```text
 Create Table
@@ -90,13 +90,13 @@ Create Table
 
 ---
 
-## Step 4
+## 4. lépés
 
-Configure the source.
+Konfiguráld a source-t.
 
 ### Create table from
 
-Select:
+Válaszd ki:
 
 ```text
 Upload
@@ -104,7 +104,7 @@ Upload
 
 ### Select file
 
-Choose:
+Válaszd ki:
 
 ```text
 mli_mapping.csv
@@ -112,13 +112,13 @@ mli_mapping.csv
 
 ---
 
-## Step 5
+## 5. lépés
 
-Configure destination.
+Konfiguráld a destinationt.
 
 ### Dataset
 
-Select:
+Válaszd ki:
 
 ```text
 <your_name>_raw
@@ -132,46 +132,46 @@ mli_mapping
 
 ---
 
-## Step 6
+## 6. lépés
 
-Configure schema.
+Konfiguráld a schemát.
 
-Select:
+Válaszd ki:
 
 ```text
 Auto detect
 ```
 
-BigQuery will automatically determine:
+A BigQuery automatikusan meghatározza:
 
-- column names
-- column types
+- a column neveket
+- a column type-okat
 
 ---
 
-## Step 7
+## 7. lépés
 
-Click:
+Kattints erre:
 
 ```text
 Create Table
 ```
 
-Wait until the table creation finishes.
+Várd meg, amíg befejeződik a table létrehozása.
 
 ---
 
-## Verify
+## Ellenőrzés
 
-Open the table.
+Nyisd meg a table-t.
 
-Select:
+Válaszd ki:
 
 ```text
 Preview
 ```
 
-You should see data similar to:
+Az alábbihoz hasonló adatokat kell látnod:
 
 | MLI | Basket | PCT | MPL_Code |
 |------|------|------|------|
@@ -180,9 +180,9 @@ You should see data similar to:
 
 ---
 
-# Load dealer_master.csv
+# A dealer_master.csv betöltése
 
-Repeat the same process.
+Ismételd meg ugyanezt a folyamatot.
 
 ### File
 
@@ -198,11 +198,11 @@ dealer_master
 
 ---
 
-## Verify
+## Ellenőrzés
 
-Preview the table.
+Tekintsd meg a table Preview-ját.
 
-Example data:
+Példaadatok:
 
 | Market | DealerCode | DealerName |
 |---------|---------|---------|
@@ -211,9 +211,9 @@ Example data:
 
 ---
 
-# Load sales_data.csv
+# A sales_data.csv betöltése
 
-Repeat the same process.
+Ismételd meg ugyanezt a folyamatot.
 
 ### File
 
@@ -229,11 +229,11 @@ sales_data
 
 ---
 
-## Verify
+## Ellenőrzés
 
-Preview the table.
+Tekintsd meg a table Preview-ját.
 
-Example data:
+Példaadatok:
 
 | Market | DealerCode | MLI | Month | Qty | Revenue |
 |---------|---------|---------|---------|---------|---------|
@@ -241,9 +241,9 @@ Example data:
 
 ---
 
-# Verify All Tables
+# Az összes table ellenőrzése
 
-Your RAW dataset should now contain:
+A RAW datasetednek most az alábbiakat kell tartalmaznia:
 
 ```text
 <your_name>_raw
@@ -253,7 +253,7 @@ Your RAW dataset should now contain:
 └── sales_data
 ```
 
-Example:
+Példa:
 
 ```text
 janos_raw
@@ -265,31 +265,31 @@ janos_raw
 
 ---
 
-# Why RAW?
+# Miért RAW?
 
-Notice that we have not:
+Figyeld meg, hogy még nem:
 
-- renamed columns
-- cleaned data
-- joined tables
-- applied business logic
+- neveztük át a columnokat
+- tisztítottuk meg az adatokat
+- joinoltuk a table-öket
+- alkalmaztunk business logicot
 
-The RAW layer should remain as close as possible to the original source.
+A RAW layernek a lehető legközelebb kell maradnia az eredeti source-hoz.
 
-This gives us:
+Ennek előnyei:
 
-- reproducibility
-- auditability
-- easier troubleshooting
-- simpler reprocessing
+- reprodukálhatóság
+- auditálhatóság
+- egyszerűbb troubleshooting
+- egyszerűbb reprocessing
 
-The next layers will contain the actual transformations.
+A következő layerek tartalmazzák majd a tényleges transformationöket.
 
 ---
 
 # Checkpoint
 
-You should now have:
+Mostanra rendelkezned kell az alábbiakkal:
 
 ✓ mli_mapping table
 
@@ -297,10 +297,10 @@ You should now have:
 
 ✓ sales_data table
 
-inside your RAW dataset.
+a RAW dataseteden belül.
 
 ---
 
-# What comes next?
+# Mi következik?
 
-In the next exercise we will explore the data using SQL and become familiar with the contents of these tables before building our Dataform models.
+A következő gyakorlatban SQL segítségével megvizsgáljuk az adatokat, és megismerkedünk a table-ök tartalmával, mielőtt felépítjük a Dataform modelleket.

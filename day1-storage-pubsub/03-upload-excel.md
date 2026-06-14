@@ -1,48 +1,46 @@
-# Day 1 - Exercise 3
+# 1. nap - 3. gyakorlat
 
-# Upload an Excel File
+# Excel-fájl feltöltése
 
-## Objective
+## Cél
 
-Upload an Excel file into the landing zone.
-
----
-
-## Estimated Time
-
-5 minutes
+Tölts fel egy Excel-fájlt a landing zone-ba.
 
 ---
 
-## Input File
+## Becsült idő
 
-Use:
+5 perc
+
+---
+
+## Input fájl
+
+Használd a training során biztosított:
 
 ```
 mli_mapping.xlsx
 ```
 
-provided during the training.
-
 ---
 
-## Steps
+## Lépések
 
-### Step 1
+### 1. lépés
 
-Open:
+Nyisd meg a:
 
 ```
 landing/
 ```
 
-inside your bucket.
+foldert a bucketeden belül.
 
 ---
 
-### Step 2
+### 2. lépés
 
-Click:
+Kattints erre:
 
 ```
 Upload Files
@@ -50,9 +48,9 @@ Upload Files
 
 ---
 
-### Step 3
+### 3. lépés
 
-Select:
+Válaszd ki:
 
 ```
 mli_mapping.xlsx
@@ -60,29 +58,29 @@ mli_mapping.xlsx
 
 ---
 
-### Step 4
+### 4. lépés
 
-Wait for the upload to finish.
+Várd meg, amíg az upload befejeződik.
 
 ---
 
-## Validation
+## Ellenőrzés
 
-Verify:
+Ellenőrizd, hogy a:
 
 ```
 landing/mli_mapping.xlsx
 ```
 
-exists.
+létezik-e.
 
 ---
 
-## Explore Metadata
+## A metadata vizsgálata
 
-Open the file.
+Nyisd meg a fájlt.
 
-Review:
+Tekintsd át:
 
 - File size
 - Creation timestamp
@@ -91,8 +89,8 @@ Review:
 
 ---
 
-## Discussion
+## Megbeszélés
 
-In the analyzed workflows:
+Az elemzett workflow-kban:
 
-What business information is stored in the MLI Mapping file?
+Milyen business informationt tárol az MLI Mapping fájl?

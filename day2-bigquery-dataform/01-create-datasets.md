@@ -1,10 +1,10 @@
-# 01 - Create BigQuery Datasets
+# 01 - BigQuery datasetek létrehozása
 
-## Objective
+## Cél
 
-In this exercise you will create the datasets that represent the different layers of a modern data warehouse.
+Ebben a gyakorlatban létrehozod azokat a dataseteket, amelyek egy modern data warehouse különböző layereit képviselik.
 
-At the end of this exercise you will have:
+A gyakorlat végére az alábbi datasetekkel fogsz rendelkezni:
 
 ```text
 <your_name>_raw
@@ -12,15 +12,15 @@ At the end of this exercise you will have:
 <your_name>_gold
 ```
 
-These datasets will be used throughout the rest of the training.
+Ezeket a dataseteket a training további részében végig használni fogjuk.
 
 ---
 
-## Why are we doing this?
+## Miért csináljuk ezt?
 
-One of the most common mistakes in data projects is storing everything in a single dataset.
+A data projectek egyik leggyakoribb hibája, hogy mindent egyetlen datasetben tárolnak.
 
-Modern data platforms separate data into layers:
+A modern data platformok különböző layerekre választják szét az adatokat:
 
 ```text
 Landing
@@ -34,30 +34,30 @@ INTERMEDIATE
 GOLD
 ```
 
-Each layer has a different responsibility.
+Minden layernek eltérő felelősségi köre van.
 
-| Layer | Purpose |
+| Layer | Cél |
 |---------|---------|
-| RAW | Original data |
-| STAGE | Technical cleaning |
+| RAW | Eredeti adatok |
+| STAGE | Technikai adattisztítás |
 | INTERMEDIATE | Business logic |
-| GOLD | Reporting and dashboards |
+| GOLD | Reporting és dashboardok |
 
-Today we will use separate datasets to represent these layers.
+Ma külön dataseteket használunk ezeknek a layereknek a megjelenítésére.
 
 ---
 
-## Open BigQuery Studio
+## A BigQuery Studio megnyitása
 
-1. Open the Google Cloud Console.
+1. Nyisd meg a Google Cloud Console-t.
 
-2. Navigate to:
+2. Navigálj ide:
 
 ```text
 BigQuery Studio
 ```
 
-3. Verify that you are working in the training project:
+3. Ellenőrizd, hogy a training projectben dolgozol:
 
 ```text
 ford-training-430008
@@ -65,29 +65,29 @@ ford-training-430008
 
 ---
 
-## Create RAW Dataset
+## A RAW dataset létrehozása
 
-1. In the Explorer panel locate:
+1. Keresd meg az Explorer panelen:
 
 ```text
 ford-training-430008
 ```
 
-2. Click the three dots next to the project name.
+2. Kattints a project neve melletti három pontra.
 
-3. Select:
+3. Válaszd ki:
 
 ```text
 Create Dataset
 ```
 
-4. Fill the form:
+4. Töltsd ki a formot:
 
 ### Dataset ID
 
-Replace `<your_name>` with your own name.
+Cseréld le a `<your_name>` értéket a saját nevedre.
 
-Example:
+Példa:
 
 ```text
 janos_raw
@@ -95,19 +95,19 @@ janos_raw
 
 ### Region
 
-Select:
+Válaszd ki:
 
 ```text
 europe-west4 (Netherlands)
 ```
 
-or the region specified by the trainer.
+vagy a trainer által megadott regiont.
 
 ### Expiration
 
-Leave default values.
+Hagyd meg a default értékeket.
 
-5. Click:
+5. Kattints erre:
 
 ```text
 Create Dataset
@@ -115,9 +115,9 @@ Create Dataset
 
 ---
 
-## Create STAGE Dataset
+## A STAGE dataset létrehozása
 
-Repeat the previous steps.
+Ismételd meg az előző lépéseket.
 
 Dataset ID:
 
@@ -125,7 +125,7 @@ Dataset ID:
 <your_name>_stage
 ```
 
-Example:
+Példa:
 
 ```text
 janos_stage
@@ -133,9 +133,9 @@ janos_stage
 
 ---
 
-## Create GOLD Dataset
+## A GOLD dataset létrehozása
 
-Repeat the previous steps.
+Ismételd meg az előző lépéseket.
 
 Dataset ID:
 
@@ -143,7 +143,7 @@ Dataset ID:
 <your_name>_gold
 ```
 
-Example:
+Példa:
 
 ```text
 janos_gold
@@ -151,9 +151,9 @@ janos_gold
 
 ---
 
-## Verify
+## Ellenőrzés
 
-Your Explorer panel should now contain:
+Az Explorer panelnek most az alábbiakat kell tartalmaznia:
 
 ```text
 ford-training-430008
@@ -163,15 +163,15 @@ ford-training-430008
 └── janos_gold
 ```
 
-Your names will be different.
+A te datasetneveid ettől eltérnek majd.
 
 ---
 
-## Why not a single dataset?
+## Miért nem egyetlen datasetet használunk?
 
-Imagine a real production environment.
+Képzelj el egy valódi production environmentet.
 
-If all tables were stored together:
+Ha minden table-t együtt tárolnánk:
 
 ```text
 sales_raw
@@ -182,22 +182,22 @@ dealer_stage
 dealer_gold
 ```
 
-the environment quickly becomes difficult to understand.
+az environment hamar nehezen áttekinthetővé válna.
 
-Separating layers into datasets provides:
+A layerek külön datasetekbe választásának előnyei:
 
-- Better organization
-- Easier troubleshooting
-- Cleaner permissions
-- Easier maintenance
+- Jobb szervezettség
+- Egyszerűbb troubleshooting
+- Átláthatóbb jogosultságok
+- Egyszerűbb karbantartás
 
-This approach is commonly used in enterprise data platforms.
+Ezt a megközelítést gyakran használják enterprise data platformokon.
 
 ---
 
 ## Checkpoint
 
-You should now have:
+Mostanra rendelkezned kell az alábbiakkal:
 
 ✓ RAW dataset
 
@@ -207,11 +207,11 @@ You should now have:
 
 ---
 
-## What comes next?
+## Mi következik?
 
-In the next exercise we will load our source files into the RAW layer.
+A következő gyakorlatban betöltjük a source fájlokat a RAW layerbe.
 
-The files are:
+A fájlok:
 
 ```text
 mli_mapping.csv
@@ -219,4 +219,4 @@ dealer_master.csv
 sales_data.csv
 ```
 
-and these will become our first BigQuery tables.
+Ezekből készülnek el az első BigQuery table-jeink.

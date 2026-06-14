@@ -1,29 +1,29 @@
-# Day 1 - Exercise 1
+# 1. nap - 1. gyakorlat
 
-# Create Your Personal Cloud Storage Bucket
+# Saját Cloud Storage bucket létrehozása
 
-## Objective
+## Cél
 
-Create a personal Cloud Storage bucket that will be used throughout the entire training.
+Hozz létre egy saját Cloud Storage bucketet, amelyet a teljes training során használni fogsz.
 
-By the end of this exercise you will:
+A gyakorlat végére:
 
-- Create a Cloud Storage bucket
-- Select an appropriate region
-- Select an appropriate storage class
-- Understand the role of Cloud Storage in the target architecture
-
----
-
-## Estimated Time
-
-10 minutes
+- Létrehozol egy Cloud Storage bucketet
+- Kiválasztod a megfelelő regiont
+- Kiválasztod a megfelelő storage classt
+- Megérted a Cloud Storage szerepét a target architecture-ben
 
 ---
 
-## Prerequisites
+## Becsült idő
 
-You have access to:
+10 perc
+
+---
+
+## Előfeltételek
+
+Hozzáféréssel rendelkezel az alábbihoz:
 
 Project:
 
@@ -33,38 +33,38 @@ ford-training-430008
 
 ---
 
-## Background
+## Háttér
 
-In the target architecture, Cloud Storage will serve as the landing zone for incoming files.
+A target architecture-ben a Cloud Storage szolgál az érkező fájlok landing zone-jaként.
 
-Typical examples:
+Tipikus példák:
 
-- Excel mapping files
-- Classification files
-- Manual business uploads
-- Exported reports
+- Excel mapping fájlok
+- Classification fájlok
+- Manuális business uploadok
+- Exportált reportok
 
-All files entering the platform will first arrive in Cloud Storage.
+A platformra érkező összes fájl először a Cloud Storage-ba kerül.
 
 ---
 
-## Steps
+## Lépések
 
-### Step 1
+### 1. lépés
 
-Open:
+Nyisd meg:
 
 ```
 Cloud Storage
 ```
 
-from the Google Cloud Console.
+a Google Cloud Console-ból.
 
 ---
 
-### Step 2
+### 2. lépés
 
-Click:
+Kattints erre:
 
 ```
 Create Bucket
@@ -72,15 +72,15 @@ Create Bucket
 
 ---
 
-### Step 3
+### 3. lépés
 
-Use the following naming convention:
+Használd az alábbi naming conventiont:
 
 ```
 training-<firstname>
 ```
 
-Examples:
+Példák:
 
 ```
 training-janos
@@ -88,11 +88,11 @@ training-peter
 training-barni
 ```
 
-Bucket names must be globally unique.
+A bucketneveknek globálisan egyedinek kell lenniük.
 
-If the name already exists, append a random number.
+Ha a név már létezik, egészítsd ki egy véletlenszerű számmal.
 
-Example:
+Példa:
 
 ```
 training-janos-001
@@ -100,25 +100,25 @@ training-janos-001
 
 ---
 
-### Step 4
+### 4. lépés
 
 Region:
 
-Select:
+Válaszd ki:
 
 ```
 europe-west4
 ```
 
-(Netherlands)
+(Hollandia)
 
 ---
 
-### Step 5
+### 5. lépés
 
 Storage Class:
 
-Select:
+Válaszd ki:
 
 ```
 Standard
@@ -126,11 +126,11 @@ Standard
 
 ---
 
-### Step 6
+### 6. lépés
 
-Leave all other settings as default.
+Az összes többi settinget hagyd default értéken.
 
-Click:
+Kattints erre:
 
 ```
 Create
@@ -138,21 +138,21 @@ Create
 
 ---
 
-## Validation
+## Ellenőrzés
 
-Verify that:
+Ellenőrizd, hogy:
 
-- Your bucket exists
-- The bucket appears in Cloud Storage
-- The location is europe-west4
-- The storage class is Standard
+- A bucketed létezik
+- A bucket megjelenik a Cloud Storage-ban
+- A location `europe-west4`
+- A storage class `Standard`
 
 ---
 
-## Discussion
+## Megbeszélés
 
-Question:
+Kérdés:
 
-Why is Cloud Storage the first component in our target architecture?
+Miért a Cloud Storage a target architecture első componentje?
 
-Think about the Excel files used in the analyzed Alteryx workflows.
+Gondolj az elemzett Alteryx workflow-kban használt Excel-fájlokra.

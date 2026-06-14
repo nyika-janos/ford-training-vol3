@@ -1,25 +1,25 @@
-# Ford GCP Training – Volume 3
+# Ford GCP Training – 3. kötet
 
 <p align="center">
-  <img src="other/ford-training-vol3_architecture.png" alt="Ford training volume 3 target architecture" width="100%">
+  <img src="other/ford-training-vol3_architecture.png" alt="A Ford training 3. kötetének target architecture diagramja" width="100%">
 </p>
 
-## Overview
+## Áttekintés
 
-This repository contains the hands-on exercises used during the third GCP training for the Ford data team.
+Ez a repository tartalmazza a Ford data team harmadik GCP trainingjén használt hands-on gyakorlatokat.
 
-The primary goal of the training is to demonstrate how existing Alteryx workflows can be migrated to a modern Google Cloud Platform architecture using native GCP services.
+A training elsődleges célja annak bemutatása, hogyan migrálhatók a meglévő Alteryx workflow-k modern Google Cloud Platform architecture-re native GCP services használatával.
 
-The training is designed for analysts and data professionals with limited cloud engineering experience. The exercises focus on understanding the architecture, the responsibilities of each component and the interaction between them.
+A training olyan analyst és data professional résztvevőknek készült, akik kevés cloud engineering tapasztalattal rendelkeznek. A gyakorlatok az architecture, az egyes componentek felelősségi köre és a közöttük lévő interakciók megértésére összpontosítanak.
 
-The examples are based on real-world workflows currently using:
+A példák olyan valós workflow-kon alapulnak, amelyek jelenleg az alábbiakat használják:
 
-- Excel files
+- Excel-fájlok
 - SharePoint
 - BigQuery
 - Alteryx
 
-The target architecture uses:
+A target architecture az alábbiakat használja:
 
 - Cloud Storage
 - Pub/Sub
@@ -32,11 +32,11 @@ The target architecture uses:
 
 ---
 
-# Training Goal
+# A training célja
 
-By the end of the training participants will understand how a typical Alteryx workflow can be implemented using Google Cloud services.
+A training végére a résztvevők megértik, hogyan implementálható egy tipikus Alteryx workflow Google Cloud services használatával.
 
-The final architecture will resemble the following:
+A végleges architecture az alábbihoz lesz hasonló:
 
 ```text
 SharePoint / Excel / CSV / XML / MS Access / BigQuery sources
@@ -53,27 +53,27 @@ SharePoint / Excel / CSV / XML / MS Access / BigQuery sources
           Power BI report / Excel export
 ```
 
-Cloud Composer (Airflow) will orchestrate the complete process.
+A teljes folyamat orchestrationjét a Cloud Composer (Airflow) végzi.
 
-At a high level, the diagram shows three ingestion patterns:
+A diagram high-level nézetben három ingestion patternt mutat be:
 
-- SharePoint files are accessed through Microsoft Graph API and imported into Cloud Storage.
-- File arrivals in Cloud Storage can trigger Pub/Sub notifications, which then start Cloud Run-based import logic.
-- Existing BigQuery and MS Access sources can be loaded into the RAW layer through BigQuery Data Transfer Service, Cloud Scheduler and Cloud Run jobs.
+- A SharePoint fájlokat a Microsoft Graph API-n keresztül érjük el, majd importáljuk a Cloud Storage-ba.
+- A Cloud Storage-ba érkező fájlok Pub/Sub notification eventeket válthatnak ki, amelyek elindítják a Cloud Run-alapú import logicot.
+- A meglévő BigQuery és MS Access source-ok a BigQuery Data Transfer Service, a Cloud Scheduler és a Cloud Run jobs segítségével tölthetők be a RAW layerbe.
 
-Inside BigQuery, Dataform owns the transformation flow from RAW to STAGE, INTERMEDIATE and GOLD datasets. The GOLD layer is then consumed by Power BI reports or exported back to Excel through Cloud Run.
+A BigQuery-n belül a RAW-tól a STAGE, INTERMEDIATE és GOLD datasetekig tartó transformation flow a Dataform felelőssége. A GOLD layert ezután Power BI reportok használják fel, vagy a Cloud Run visszaexportálja Excelbe.
 
 ---
 
-# Training Structure
+# A training felépítése
 
-The training consists of four half-day sessions.
+A training négy félnapos sessionből áll.
 
-## Day 1
+## 1. nap
 
 ### Cloud Storage & Pub/Sub
 
-Topics:
+Témakörök:
 
 - Cloud Storage
 - Landing Zone design
@@ -81,17 +81,17 @@ Topics:
 - Event-driven architecture
 - Pub/Sub fundamentals
 
-Hands-on exercises:
+Hands-on gyakorlatok:
 
-- Create a personal bucket
-- Create enterprise folder structure
-- Upload Excel files
-- Create Pub/Sub topics
-- Create subscriptions
-- Configure Cloud Storage notifications
-- Generate and inspect Pub/Sub events
+- Személyes bucket létrehozása
+- Enterprise folder structure létrehozása
+- Excel fájlok feltöltése
+- Pub/Sub topicok létrehozása
+- Subscriptionök létrehozása
+- Cloud Storage notificationök konfigurálása
+- Pub/Sub eventek generálása és vizsgálata
 
-End result:
+Végeredmény:
 
 ```text
 Excel
@@ -105,30 +105,30 @@ Message
 
 ---
 
-## Day 2
+## 2. nap
 
 ### BigQuery & Dataform
 
-Topics:
+Témakörök:
 
 - Data warehouse fundamentals
 - Raw / Staging / Intermediate / Gold layers
-- BigQuery datasets
-- Tables and views
+- BigQuery datasetek
+- Table-ök és view-k
 - Dataform
 - Dataform vs dbt
 
-Hands-on exercises:
+Hands-on gyakorlatok:
 
-- Create datasets
-- Create external tables
-- Create native tables
-- Create views
-- Build Dataform models
-- Create transformations
-- Create a Gold table
+- Datasetek létrehozása
+- External table-ök létrehozása
+- Native table-ök létrehozása
+- View-k létrehozása
+- Dataform modellek építése
+- Transformationök létrehozása
+- Gold table létrehozása
 
-End result:
+Végeredmény:
 
 ```text
 Excel
@@ -144,30 +144,30 @@ Gold Table
 
 ---
 
-## Day 3
+## 3. nap
 
 ### Cloud Run
 
-Topics:
+Témakörök:
 
 - Serverless compute
 - Cloud Run Services
 - Cloud Run Jobs
 - Event-driven processing
-- Python-based integrations
-- Manual HTTP-triggered services for later orchestration
+- Python-alapú integrationök
+- Manuális, HTTP-triggered service-ek a későbbi orchestration előkészítéséhez
 
-Hands-on exercises:
+Hands-on gyakorlatok:
 
-- Use Git and Cloud Shell for the training repository
-- Deploy a Cloud Run service
-- Connect Pub/Sub events to Cloud Run
-- Read CSV and Excel files from Cloud Storage
-- Load landing-zone files into BigQuery RAW tables
-- Export BigQuery GOLD data into Excel
-- Write importer and exporter run logs
+- A Git és a Cloud Shell használata a training repositoryhoz
+- Cloud Run service deployolása
+- Pub/Sub eventek összekapcsolása a Cloud Runnal
+- CSV- és Excel-fájlok beolvasása a Cloud Storage-ból
+- Landing Zone fájlok betöltése BigQuery RAW table-ökbe
+- BigQuery GOLD adatok exportálása Excelbe
+- Importer és exporter run logok írása
 
-End result:
+Végeredmény:
 
 ```text
 Excel
@@ -187,37 +187,37 @@ Cloud Run
 Excel export
 ```
 
-Day 3 contains two Cloud Run service patterns:
+A 3. nap két Cloud Run service patternt tartalmaz:
 
-- `data-importer`: event-driven service started by Pub/Sub when a file arrives in the bucket `landing/` folder.
-- `data-exporter`: HTTP-triggered service that exports `sales_gold` from BigQuery to an Excel file in the bucket `export/` folder.
+- `data-importer`: event-driven service, amelyet a Pub/Sub indít el, amikor fájl érkezik a bucket `landing/` folderébe.
+- `data-exporter`: HTTP-triggered service, amely a BigQuery `sales_gold` adatait egy Excel-fájlba exportálja a bucket `export/` folderében.
 
-The exporter is intentionally called manually with `curl` during Day 3. This keeps the service easy to understand before Day 4 introduces Airflow orchestration.
+A 3. napon az exportert szándékosan manuálisan, `curl` használatával hívjuk meg. Így a service könnyen érthető marad, mielőtt a 4. napon megismerkedünk az Airflow orchestrationnel.
 
 ---
 
-## Day 4
+## 4. nap
 
 ### Cloud Composer (Airflow)
 
-Topics:
+Témakörök:
 
 - Workflow orchestration
 - DAGs
 - Scheduling
 - Monitoring
 - Error handling
-- Retry strategies
+- Retry stratégiák
 
-Hands-on exercises:
+Hands-on gyakorlatok:
 
-- Create Airflow DAGs
-- Trigger Cloud Run
-- Trigger Dataform
-- Monitor execution
-- Build an end-to-end pipeline
+- Airflow DAG-ok létrehozása
+- Cloud Run triggerelése
+- Dataform triggerelése
+- Execution monitorozása
+- End-to-end pipeline építése
 
-End result:
+Végeredmény:
 
 ```text
 Excel
@@ -237,11 +237,11 @@ Gold Layer
 Export
 ```
 
-Day 4 connects the pieces from the first three days. Airflow will be used to coordinate the order of operations: refresh the BigQuery/Dataform layers, call Cloud Run services such as the data exporter, monitor results and make retry/error handling visible in one orchestration layer.
+A 4. nap összekapcsolja az első három nap elemeit. Az Airflow segítségével koordináljuk az operationök sorrendjét: frissítjük a BigQuery/Dataform layereket, meghívjuk a Cloud Run service-eket, például a data exportert, monitorozzuk az eredményeket, valamint egyetlen orchestration layerben tesszük láthatóvá a retry/error handling működését.
 
 ---
 
-# Repository Structure
+# A repository felépítése
 
 ```text
 ford-training-vol3
@@ -301,28 +301,26 @@ ford-training-vol3
 
 ---
 
-# Prerequisites
+# Előfeltételek
 
-Participants should have:
+A résztvevőknek az alábbiakkal kell rendelkezniük:
 
-- Access to the training GCP project
-- Editor permissions
-- A Google account
-- Basic understanding of SQL
-- Basic understanding of Excel
+- Hozzáférés a training GCP projecthez
+- Editor jogosultságok
+- Google account
+- Alapszintű SQL-ismeretek
+- Alapszintű Excel-ismeretek
 
-No prior experience with:
+Nem szükséges előzetes tapasztalat az alábbiakkal:
 
 - Cloud Run
 - Dataform
 - Composer
 - Pub/Sub
 
-is required.
-
 ---
 
-# Training Project
+# Training project
 
 Project ID:
 
@@ -330,15 +328,15 @@ Project ID:
 ford-training-430008
 ```
 
-All exercises in this repository assume that participants are working inside this project.
+A repository összes gyakorlata azt feltételezi, hogy a résztvevők ebben a projectben dolgoznak.
 
 ---
 
-# Important Note
+# Fontos megjegyzés
 
-The exercises intentionally focus on understanding the architecture rather than building production-ready solutions.
+A gyakorlatok szándékosan az architecture megértésére, nem pedig production-ready solutionök építésére összpontosítanak.
 
-Many enterprise topics such as:
+Számos enterprise témakört, például az alábbiakat:
 
 - CI/CD
 - Terraform
@@ -348,32 +346,32 @@ Many enterprise topics such as:
 - Cost optimization
 - Security hardening
 
-are simplified in order to keep the focus on the migration journey from Alteryx to GCP.
+leegyszerűsítünk, hogy a fókusz az Alteryxről GCP-re történő migration folyamatán maradjon.
 
-The objective is to understand:
+A cél annak megértése:
 
-- Which GCP component solves which problem
-- How the components interact
-- How an Alteryx workflow maps to a cloud-native architecture
-
----
-
-# Learning Outcome
-
-After completing the training, participants should be able to:
-
-- Understand the target GCP architecture
-- Ingest files into Cloud Storage
-- Process events with Pub/Sub
-- Store and transform data in BigQuery
-- Build Dataform pipelines
-- Execute Python workloads in Cloud Run
-- Orchestrate workflows with Airflow
-- Understand how existing Alteryx workflows can be migrated to GCP
+- Melyik GCP component milyen problémát old meg
+- Hogyan működnek együtt a componentek
+- Hogyan képezhető le egy Alteryx workflow cloud-native architecture-re
 
 ---
 
-# Architecture Summary
+# Tanulási eredmények
+
+A training elvégzése után a résztvevők képesek lesznek:
+
+- Megérteni a target GCP architecture-t
+- Fájlokat ingestálni a Cloud Storage-ba
+- Eventeket feldolgozni a Pub/Sub segítségével
+- Adatokat tárolni és transformálni a BigQuery-ben
+- Dataform pipeline-okat építeni
+- Python workloadokat futtatni a Cloud Runban
+- Workflow-kat orchestrálni az Airflow segítségével
+- Megérteni, hogyan migrálhatók a meglévő Alteryx workflow-k GCP-re
+
+---
+
+# Architecture összefoglaló
 
 ```text
 SharePoint / Excel / CSV / XML / MS Access / BigQuery
@@ -389,6 +387,6 @@ SharePoint / Excel / CSV / XML / MS Access / BigQuery
           Power BI / Excel Export
 
 Cloud Composer (Airflow)
-        orchestrates
-     the entire flow
+      orchestrálja
+   a teljes flow-t
 ```

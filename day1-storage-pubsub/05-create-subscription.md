@@ -1,24 +1,24 @@
-# Day 1 - Exercise 5
+# 1. nap - 5. gyakorlat
 
-# Create a Subscription
+# Subscription létrehozása
 
-## Objective
+## Cél
 
-Create a subscription that can receive messages from the topic.
-
----
-
-## Estimated Time
-
-10 minutes
+Hozz létre egy subscriptiont, amely képes message-eket fogadni a topictól.
 
 ---
 
-## Steps
+## Becsült idő
 
-### Step 1
+10 perc
 
-Open:
+---
+
+## Lépések
+
+### 1. lépés
+
+Nyisd meg:
 
 ```
 file-arrived-topic-<firstname>
@@ -26,9 +26,9 @@ file-arrived-topic-<firstname>
 
 ---
 
-### Step 2
+### 2. lépés
 
-Click:
+Kattints erre:
 
 ```
 Create Subscription
@@ -36,7 +36,7 @@ Create Subscription
 
 ---
 
-### Step 3
+### 3. lépés
 
 Subscription name:
 
@@ -46,7 +46,7 @@ file-arrived-sub
 
 ---
 
-### Step 4
+### 4. lépés
 
 Delivery Type:
 
@@ -56,11 +56,11 @@ Pull
 
 ---
 
-### Step 5
+### 5. lépés
 
-Leave defaults.
+Hagyd meg a default értékeket.
 
-Click:
+Kattints erre:
 
 ```
 Create
@@ -68,18 +68,18 @@ Create
 
 ---
 
-## Validation
+## Ellenőrzés
 
-Verify:
+Ellenőrizd, hogy a:
 
 ```
 file-arrived-sub
 ```
 
-exists.
+létezik-e.
 
 ---
 
-## Discussion
+## Megbeszélés
 
-Why might Pull subscriptions be simpler for learning and testing?
+Miért lehetnek egyszerűbbek a Pull subscriptionök tanulási és testing célokra?

@@ -1,41 +1,41 @@
-# 07 - Create the GOLD Layer and Data Quality Checks
+# 07 - A GOLD layer és data quality checkek létrehozása
 
-## Objective
+## Cél
 
-In this exercise we will create the final reporting layer of the warehouse.
+Ebben a gyakorlatban létrehozzuk a warehouse végső reporting layerét.
 
-The GOLD layer contains business-ready data that can be consumed directly by:
+A GOLD layer business-ready adatokat tartalmaz, amelyeket közvetlenül használhat:
 
 - Power BI
 - Excel
 - Looker
-- Reporting applications
-- Downstream data products
+- Reporting applicationök
+- Downstream data productok
 
-At the end of this exercise we will have:
+A gyakorlat végére rendelkezünk majd az alábbival:
 
 ```text
 <your_name>_gold.sales_gold
 ```
 
-and our first automated Dataform data quality checks.
+valamint az első automatizált Dataform data quality checkjeinkkel.
 
 ---
 
-# What is a GOLD Layer?
+# Mi a GOLD layer?
 
-The GOLD layer represents the final version of the data.
+A GOLD layer az adatok végleges verzióját képviseli.
 
-Unlike RAW or STAGE tables, GOLD tables are designed for business consumption.
+A RAW vagy STAGE table-ökkel ellentétben a GOLD table-öket business consumptionre tervezzük.
 
-A GOLD table should:
+Egy GOLD table:
 
-- have clear business meaning
-- be easy to query
-- hide technical complexity
-- contain aggregated and enriched data
+- egyértelmű business meaninggel rendelkezik
+- könnyen queryzhető
+- elrejti a technikai komplexitást
+- aggregált és enriched adatokat tartalmaz
 
-Think of it as:
+A folyamatban elfoglalt helye:
 
 ```text
 RAW
@@ -46,14 +46,14 @@ INTERMEDIATE
 ↓
 GOLD
 ↓
-Business Users
+Business userek
 ```
 
 ---
 
-# What Should NOT Be in a GOLD Layer?
+# Mi NEM kerülhet a GOLD layerbe?
 
-Business users should not need to know:
+A business usereknek nem kell ismerniük az alábbiakat:
 
 ```text
 DealerCode
@@ -62,7 +62,7 @@ Source File Names
 Technical Keys
 ```
 
-Instead they should see:
+Ehelyett az alábbiakat kell látniuk:
 
 ```text
 Market
@@ -71,13 +71,13 @@ Revenue
 Quantity
 ```
 
-The GOLD layer translates technical data into business data.
+A GOLD layer a technikai adatokat business data-vá alakítja.
 
 ---
 
-# Review the Current Warehouse
+# A jelenlegi warehouse áttekintése
 
-We currently have:
+Jelenleg az alábbiakkal rendelkezünk:
 
 ```text
 RAW
@@ -92,7 +92,7 @@ STAGE
 └── sales_enriched
 ```
 
-Today we will create:
+Ma ezt hozzuk létre:
 
 ```text
 GOLD
@@ -101,21 +101,21 @@ GOLD
 
 ---
 
-# Open sales_gold.sqlx
+# A sales_gold.sqlx megnyitása
 
-Navigate to:
+Navigálj ide:
 
 ```text
 definitions/sales_gold.sqlx
 ```
 
-This model creates our final reporting table.
+Ez a model hozza létre a végső reporting table-t.
 
 ---
 
-# Review the Configuration Block
+# A configuration block áttekintése
 
-At the top of the file you should see:
+A fájl tetején az alábbit kell látnod:
 
 ```sql
 config {
@@ -130,64 +130,64 @@ config {
 }
 ```
 
-Several important concepts appear here.
+Itt több fontos concept is megjelenik.
 
 ---
 
-# Why Are We Using a Separate Dataset?
+# Miért használunk külön datasetet?
 
-Notice:
+Figyeld meg:
 
 ```sql
 schema: require("../includes/config").gold_dataset
 ```
 
-For a user named:
+Egy ilyen nevű user esetén:
 
 ```text
 janos
 ```
 
-the table will be created in:
+a table itt jön létre:
 
 ```text
 janos_gold
 ```
 
-This keeps reporting tables separate from staging and transformation tables.
+Így a reporting table-ök elkülönülnek a staging és transformation table-öktől.
 
 ---
 
-# Review the Source Table
+# A source table áttekintése
 
-Locate:
+Keresd meg:
 
 ```sql
 FROM ${ref("sales_enriched")}
 ```
 
-Again we use:
+Ismét ezt használjuk:
 
 ```text
 ref()
 ```
 
-instead of hardcoded table names.
+a hardcode-olt tablenevek helyett.
 
-Dataform automatically manages dependencies.
+A Dataform automatikusan kezeli a dependencyket.
 
 ---
 
-# Review the Aggregation Logic
+# Az aggregation logic áttekintése
 
-The GOLD table groups data by:
+A GOLD table az alábbiak szerint groupolja az adatokat:
 
 ```sql
 Market,
 Basket
 ```
 
-and calculates:
+és kiszámítja:
 
 ```sql
 SUM(Qty)
@@ -195,7 +195,7 @@ SUM(Revenue)
 COUNT(*)
 ```
 
-The result becomes:
+Az eredmény:
 
 ```text
 Market
@@ -207,13 +207,13 @@ Transaction_Count
 
 ---
 
-# Why Aggregate?
+# Miért aggregálunk?
 
-The source table contains transaction-level data.
+A source table transaction-level adatokat tartalmaz.
 
-Business users usually do not need every transaction.
+A business usereknek általában nincs szükségük minden egyes transactionre.
 
-Instead they want summaries such as:
+Ehelyett ilyen summarykra van szükségük:
 
 ```text
 Revenue by Market
@@ -221,13 +221,13 @@ Revenue by Product Group
 Quantity by Basket
 ```
 
-The GOLD layer prepares exactly this type of information.
+A GOLD layer pontosan ezt a fajta információt készíti elő.
 
 ---
 
-# Review the Output Columns
+# Az output columnok áttekintése
 
-The final GOLD table contains:
+A végső GOLD table az alábbiakat tartalmazza:
 
 ```text
 Market
@@ -237,7 +237,7 @@ Total_Revenue
 Transaction_Count
 ```
 
-Notice that:
+Figyeld meg, hogy az alábbiak:
 
 ```text
 DealerCode
@@ -246,15 +246,15 @@ DealerName
 Month
 ```
 
-are no longer included.
+már nem szerepelnek benne.
 
-Those details are useful for processing but not necessary for this report.
+Ezek a részletek hasznosak a processinghez, de ehhez a reporthoz nem szükségesek.
 
 ---
 
-# What Are Assertions?
+# Mik az assertionök?
 
-The next section is:
+A következő section:
 
 ```sql
 assertions: {
@@ -263,77 +263,77 @@ assertions: {
 }
 ```
 
-Assertions are automated data quality checks.
+Az assertionök automatizált data quality checkek.
 
-They run every time the model executes.
+A model minden futtatásakor végrehajtódnak.
 
 ---
 
-# Why Do We Need Data Quality Checks?
+# Miért van szükség data quality checkekre?
 
 Without validation:
 
 ```text
-Broken Data
+Hibás adatok
 ↓
 Power BI
 ↓
-Wrong Reports
+Hibás reportok
 ↓
-Wrong Decisions
+Hibás döntések
 ```
 
 With validation:
 
 ```text
-Broken Data
+Hibás adatok
 ↓
-Assertion Failure
+Assertion failure
 ↓
-Pipeline Stops
+A pipeline leáll
 ```
 
-Problems are detected much earlier.
+A problémákat így sokkal korábban észleljük.
 
 ---
 
-# Understanding nonNull
+# A nonNull megértése
 
-The first assertion:
+Az első assertion:
 
 ```sql
 nonNull: ["Market", "Basket"]
 ```
 
-means:
+jelentése:
 
 ```text
-Market must always contain a value
-Basket must always contain a value
+A Marketnek mindig tartalmaznia kell értéket
+A Basketnek mindig tartalmaznia kell értéket
 ```
 
-If a NULL value appears, Dataform will fail the execution.
+Ha NULL érték jelenik meg, a Dataform sikertelenre állítja az executiont.
 
 ---
 
-# Understanding uniqueKey
+# A uniqueKey megértése
 
-The second assertion:
+A második assertion:
 
 ```sql
 uniqueKey: ["Market", "Basket"]
 ```
 
-means:
+jelentése:
 
 ```text
-Each Market + Basket combination
-must appear only once.
+Minden Market + Basket kombináció
+csak egyszer szerepelhet.
 ```
 
-Examples:
+Példák:
 
-Valid:
+Érvényes:
 
 ```text
 HU | SUV
@@ -341,20 +341,20 @@ HU | Parts
 NL | SUV
 ```
 
-Invalid:
+Érvénytelen:
 
 ```text
 HU | SUV
 HU | SUV
 ```
 
-The second example would fail validation.
+A második példa validation failure-t eredményezne.
 
 ---
 
-# Where Did These Checks Come From?
+# Honnan származnak ezek a checkek?
 
-Earlier today we manually investigated:
+Korábban manuálisan vizsgáltuk az alábbiakat:
 
 ```sql
 COUNT(*)
@@ -364,35 +364,35 @@ COUNT(DISTINCT ...)
 NULL checks
 ```
 
-during data profiling.
+a data profiling során.
 
-Now we are automating those checks.
+Most automatizáljuk ezeket a checkeket.
 
-This is exactly how mature warehouse projects evolve.
+Pontosan így fejlődnek az érett warehouse projectek.
 
 ---
 
-# Compile the Model
+# A model compile-olása
 
-Click:
+Kattints erre:
 
 ```text
 Compile
 ```
 
-The model should compile successfully.
+A modelnek sikeresen kell compile-olódnia.
 
 ---
 
-# Review the Dependency Graph
+# A Dependency Graph áttekintése
 
-Open:
+Nyisd meg:
 
 ```text
 Lineage
 ```
 
-You should now see:
+Most az alábbit kell látnod:
 
 ```text
 sales_stage
@@ -410,37 +410,37 @@ sales_enriched
 sales_gold
 ```
 
-The entire transformation flow is now visible.
+Most már a teljes transformation flow látható.
 
 ---
 
-# Execute sales_gold
+# A sales_gold futtatása
 
-Run:
+Futtasd:
 
 ```text
 sales_gold
 ```
 
-Wait until execution completes.
+Várd meg, amíg az execution befejeződik.
 
 ---
 
-# Verify the GOLD Dataset
+# A GOLD dataset ellenőrzése
 
-Navigate to:
+Navigálj ide:
 
 ```text
 BigQuery Studio
 ```
 
-Open:
+Nyisd meg:
 
 ```text
 <your_name>_gold
 ```
 
-You should see:
+Az alábbit kell látnod:
 
 ```text
 sales_gold
@@ -448,9 +448,9 @@ sales_gold
 
 ---
 
-# Inspect the Results
+# Az eredmények vizsgálata
 
-Run:
+Futtasd:
 
 ```sql
 SELECT *
@@ -459,7 +459,7 @@ ORDER BY Total_Revenue DESC
 LIMIT 20;
 ```
 
-Review:
+Tekintsd át:
 
 - Market
 - Basket
@@ -467,13 +467,13 @@ Review:
 - Total_Revenue
 - Transaction_Count
 
-This is now a reporting-ready table.
+Ez most már egy reporting-ready table.
 
 ---
 
-# Validate Uniqueness
+# Az egyediség validálása
 
-Run:
+Futtasd:
 
 ```sql
 SELECT
@@ -487,19 +487,19 @@ GROUP BY
 HAVING COUNT(*) > 1;
 ```
 
-Expected result:
+Várt eredmény:
 
 ```text
 0 rows
 ```
 
-This confirms the uniqueness assumption.
+Ez megerősíti az egyediségre vonatkozó feltételezést.
 
 ---
 
-# Validate Null Values
+# A NULL értékek validálása
 
-Run:
+Futtasd:
 
 ```sql
 SELECT *
@@ -508,19 +508,19 @@ WHERE Market IS NULL
    OR Basket IS NULL;
 ```
 
-Expected result:
+Várt eredmény:
 
 ```text
 0 rows
 ```
 
-This confirms the non-null assumption.
+Ez megerősíti a non-null feltételezést.
 
 ---
 
-# Compare to Alteryx
+# Összehasonlítás az Alteryxszel
 
-The logic we just implemented is equivalent to:
+Az imént implementált logic az alábbival egyenértékű:
 
 ```text
 Input
@@ -534,66 +534,66 @@ Summarize
 Output
 ```
 
-inside an Alteryx workflow.
+egy Alteryx workflow-ban.
 
-The difference is that Dataform:
+A különbség az, hogy a Dataform:
 
-- tracks dependencies
-- stores everything in Git
-- performs automated testing
-- documents lineage
+- követi a dependencyket
+- mindent Gitben tárol
+- automatizált testinget végez
+- dokumentálja a lineage-et
 
 ---
 
-# Why Is This Important for Power BI?
+# Miért fontos ez a Power BI számára?
 
-Most reporting tools should connect to:
+A legtöbb reporting toolnak ehhez kell csatlakoznia:
 
 ```text
 GOLD
 ```
 
-not:
+nem ehhez:
 
 ```text
 RAW
 ```
 
-and usually not:
+és általában ehhez sem:
 
 ```text
 STAGE
 ```
 
-The GOLD layer acts as the contract between the data team and business users.
+A GOLD layer contractként szolgál a data team és a business userek között.
 
 ---
 
 # Checkpoint
 
-You should now have:
+Mostanra rendelkezned kell az alábbiakkal:
 
 ✓ sales_gold
 
-✓ Automated assertions
+✓ Automatizált assertionök
 
 ✓ Reporting-ready dataset
 
-✓ Aggregated business metrics
+✓ Aggregált business metrikák
 
-✓ Full warehouse lineage
+✓ Teljes warehouse lineage
 
 ✓ End-to-end Dataform pipeline
 
 ---
 
-# What Comes Next?
+# Mi következik?
 
-Today we loaded CSV files manually and transformed them using Dataform.
+Ma manuálisan töltöttük be a CSV-fájlokat, majd a Dataform segítségével transformáltuk őket.
 
-Tomorrow we will automate the ingestion process.
+Holnap automatizáljuk az ingestion processt.
 
-Instead of manually loading files into BigQuery:
+A fájlok BigQuerybe történő manuális betöltése helyett:
 
 ```text
 Excel File
@@ -609,6 +609,6 @@ Dataform
 GOLD
 ```
 
-The warehouse architecture remains exactly the same.
+A warehouse architecture pontosan ugyanaz marad.
 
-Only the ingestion layer becomes automated.
+Csak az ingestion layer válik automatizálttá.

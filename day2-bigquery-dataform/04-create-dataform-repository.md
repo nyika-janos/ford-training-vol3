@@ -1,32 +1,32 @@
-# 04 - Create Dataform Repository
+# 04 - Dataform repository létrehozása
 
-## Objective
+## Cél
 
-In this exercise we will create a Dataform repository and prepare it for development.
+Ebben a gyakorlatban létrehozunk egy Dataform repositoryt, és előkészítjük a developmenthez.
 
-We will not write SQL from scratch.
+Nem írunk SQL-t az alapoktól.
 
-Instead, we will use a pre-built repository structure that already contains the Dataform models we will use throughout the training.
+Ehelyett egy előre elkészített repository structure-t használunk, amely már tartalmazza a training során használt Dataform modelleket.
 
-The prepared repository files are available in this training repository under:
+Az előkészített repository fájlok ebben a training repositoryban, az alábbi helyen találhatók:
 
 ```text
 day2-bigquery-dataform/materials/dataform
 ```
 
-At the end of this exercise you will have:
+A gyakorlat végére rendelkezel majd az alábbival:
 
 ```text
 <your_name>_training_dataform
 ```
 
-connected to BigQuery and ready for development.
+amely csatlakozik a BigQueryhez, és készen áll a developmentre.
 
 ---
 
-# Why are we doing this?
+# Miért csináljuk ezt?
 
-So far we have created the RAW layer:
+Eddig létrehoztuk a RAW layert:
 
 ```text
 CSV Files
@@ -34,9 +34,9 @@ CSV Files
 BigQuery RAW Tables
 ```
 
-The next step is to transform the data into a reporting-ready warehouse.
+A következő lépés az adatok átalakítása egy reporting-ready warehouse-zá.
 
-In Alteryx this would be implemented using:
+Az Alteryxben ezt az alábbi toolokkal valósítanánk meg:
 
 - Select
 - Formula
@@ -44,9 +44,9 @@ In Alteryx this would be implemented using:
 - Join
 - Summarize
 
-tools connected together in a workflow.
+Ezeket egy workflow-ban kapcsolnánk össze.
 
-In GCP we will implement the same logic using:
+A GCP-ben ugyanezt a logicot az alábbiakkal valósítjuk meg:
 
 ```text
 BigQuery
@@ -56,39 +56,39 @@ Dataform
 
 ---
 
-# What is Dataform?
+# Mi a Dataform?
 
-Dataform is a GCP-native transformation framework.
+A Dataform egy GCP-native transformation framework.
 
-It helps us:
+Az alábbiakban segít:
 
-- organize SQL code
-- create reusable transformation pipelines
-- manage dependencies
-- create data quality checks
-- build warehouse layers
+- SQL-kód rendszerezése
+- Újrafelhasználható transformation pipeline-ok létrehozása
+- Dependencyk kezelése
+- Data quality checkek létrehozása
+- Warehouse layerek építése
 
-The actual processing is still performed by BigQuery.
+A tényleges processinget továbbra is a BigQuery végzi.
 
-Dataform orchestrates and manages the transformations.
+A Dataform orchestrálja és kezeli a transformationöket.
 
 ---
 
-# Open Dataform
+# A Dataform megnyitása
 
-Navigate to:
+Navigálj ide:
 
 ```text
 Dataform
 ```
 
-in the Google Cloud Console.
+a Google Cloud Console-ban.
 
 ---
 
-# Create Repository
+# Repository létrehozása
 
-Click:
+Kattints erre:
 
 ```text
 Create Repository
@@ -100,7 +100,7 @@ Repository name:
 <your_name>_training_dataform
 ```
 
-Example:
+Példa:
 
 ```text
 janos_training_dataform
@@ -114,25 +114,25 @@ europe-west4
 
 ---
 
-# Git Integration
+# Git integration
 
-For this exercise select:
+Ehhez a gyakorlathoz válaszd ki:
 
 ```text
 Create without a remote repository
 ```
 
-We will manually import the training files.
+A training fájlokat manuálisan importáljuk.
 
-Later, in real projects, Dataform repositories are usually connected to GitHub or GitLab.
+Később, valós projectekben a Dataform repositorykat általában a GitHubhoz vagy a GitLabhoz csatlakoztatják.
 
 ---
 
-# Create Workspace
+# Workspace létrehozása
 
-After the repository has been created:
+A repository létrehozása után:
 
-Click:
+Kattints erre:
 
 ```text
 Create Workspace
@@ -144,13 +144,13 @@ Workspace name:
 development
 ```
 
-Open the workspace.
+Nyisd meg a workspace-t.
 
 ---
 
-# Review the Repository Structure
+# A repository structure áttekintése
 
-You should see something similar to:
+Az alábbihoz hasonló structure-t kell látnod:
 
 ```text
 definitions/
@@ -160,15 +160,15 @@ workflow_settings.yaml
 
 ---
 
-# Configure workflow_settings.yaml
+# A workflow_settings.yaml konfigurálása
 
-Open:
+Nyisd meg:
 
 ```text
 workflow_settings.yaml
 ```
 
-Replace the contents with:
+Cseréld le a tartalmát erre:
 
 ```yaml
 defaultProject: ford-training-430008
@@ -179,15 +179,15 @@ vars:
   username: "janos"
 ```
 
-Replace:
+Cseréld le ezt:
 
 ```text
 janos
 ```
 
-with your own first name.
+a saját keresztnevedre.
 
-Examples:
+Példák:
 
 ```yaml
 vars:
@@ -206,9 +206,9 @@ vars:
 
 ---
 
-# Why are we storing the username here?
+# Miért itt tároljuk a username-et?
 
-Throughout the training every participant will have their own datasets:
+A training során minden résztvevő saját datasetekkel rendelkezik:
 
 ```text
 janos_raw
@@ -224,17 +224,17 @@ barni_stage
 barni_gold
 ```
 
-Instead of hardcoding these names throughout the project, we store the username once and generate everything else automatically.
+Ahelyett, hogy ezeket a neveket a teljes projectben hardcode-olnánk, egyszer tároljuk a username-et, és minden mást automatikusan generálunk.
 
 ---
 
-# Download the Training Repository
+# A training repository letöltése
 
-Open:
+Nyisd meg:
 
 [ford-training-vol3-day2-dataform-repo](https://github.com/nyika-janos/ford-training-vol3-day2-dataform-repo?utm_source=chatgpt.com)
 
-Download:
+Töltsd le:
 
 ```text
 Code
@@ -242,42 +242,42 @@ Code
 Download ZIP
 ```
 
-Extract the archive locally.
+Csomagold ki az archívumot lokálisan.
 
 ---
 
-# Review the Repository Structure
+# A repository structure áttekintése
 
-Inside the downloaded repository you will find:
+A letöltött repositoryban az alábbiakat találod:
 
 ```text
 definitions/
 includes/
 ```
 
-The files have already been prepared for this training.
+A fájlokat már előkészítettük ehhez a traininghez.
 
 ---
 
-# Upload the Training Files
+# A training fájlok feltöltése
 
-Copy the contents of:
+Másold át ennek a tartalmát:
 
 ```text
 definitions/
 ```
 
-from the downloaded repository into your Dataform repository.
+a letöltött repositoryból a Dataform repositorydba.
 
-Copy the contents of:
+Másold át ennek a tartalmát:
 
 ```text
 includes/
 ```
 
-into your Dataform repository.
+a Dataform repositorydba.
 
-Your structure should now look like:
+A structure-nek most így kell kinéznie:
 
 ```text
 definitions/
@@ -293,27 +293,27 @@ includes/
 
 ---
 
-# Review includes/config.js
+# Az includes/config.js áttekintése
 
-Open:
+Nyisd meg:
 
 ```text
 includes/config.js
 ```
 
-This file automatically generates dataset names based on the username stored in:
+Ez a fájl automatikusan generálja a datasetneveket az alábbi fájlban tárolt username alapján:
 
 ```yaml
 workflow_settings.yaml
 ```
 
-For example:
+Például ez:
 
 ```yaml
 username: "janos"
 ```
 
-automatically becomes:
+automatikusan ezt eredményezi:
 
 ```text
 janos_raw
@@ -321,68 +321,68 @@ janos_stage
 janos_gold
 ```
 
-This approach prevents hardcoding dataset names throughout the project.
+Ez a megközelítés elkerüli a datasetnevek hardcode-olását a teljes projectben.
 
 ---
 
-# Review the Model Structure
+# A model structure áttekintése
 
-Open:
+Nyisd meg:
 
 ```text
 sales_stage.sqlx
 ```
 
-Notice:
+Figyeld meg:
 
 ```sql
 schema: require("../includes/config").stage_dataset
 ```
 
-The dataset name is generated dynamically.
+A datasetnév dinamikusan jön létre.
 
-The same pattern is used throughout the repository.
+Ugyanezt a patternt használjuk a teljes repositoryban.
 
 ---
 
-# Compile the Repository
+# A repository compile-olása
 
-Click:
+Kattints erre:
 
 ```text
 Compile
 ```
 
-The compilation should complete successfully.
+A compilationnek sikeresen be kell fejeződnie.
 
-If compilation fails:
+Ha a compilation sikertelen:
 
-- verify the username
-- verify workflow_settings.yaml
-- verify that all files were copied correctly
+- ellenőrizd a username-et
+- ellenőrizd a `workflow_settings.yaml` fájlt
+- ellenőrizd, hogy minden fájlt megfelelően másoltál-e át
 
 ---
 
 # Checkpoint
 
-You should now have:
+Mostanra rendelkezned kell az alábbiakkal:
 
 ✓ Dataform repository
 
 ✓ Development workspace
 
-✓ workflow_settings.yaml configured
+✓ Konfigurált `workflow_settings.yaml`
 
-✓ definitions imported
+✓ Importált `definitions`
 
-✓ includes imported
+✓ Importált `includes`
 
-✓ Successful compilation
+✓ Sikeres compilation
 
 ---
 
-# What comes next?
+# Mi következik?
 
-In the next exercise we will review the STAGE models and execute the first transformations.
+A következő gyakorlatban áttekintjük a STAGE modelleket, és futtatjuk az első transformationöket.
 
-We will clean and standardize the RAW data before applying business logic.
+Megtisztítjuk és standardizáljuk a RAW adatokat a business logic alkalmazása előtt.

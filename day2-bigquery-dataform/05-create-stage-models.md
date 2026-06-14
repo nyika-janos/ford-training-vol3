@@ -1,22 +1,22 @@
-# 05 - Create STAGE Models
+# 05 - STAGE modellek létrehozása
 
-## Objective
+## Cél
 
-In this exercise we will examine the STAGE layer and execute our first Dataform transformations.
+Ebben a gyakorlatban megvizsgáljuk a STAGE layert, és futtatjuk az első Dataform transformationöket.
 
-The purpose of the STAGE layer is not to implement business logic.
+A STAGE layer célja nem a business logic implementálása.
 
-Its purpose is to prepare the data for later processing.
+A célja az adatok előkészítése a későbbi processinghez.
 
-Typical STAGE activities include:
+A tipikus STAGE tevékenységek:
 
-- data type harmonization
-- column standardization
-- trimming text values
-- converting keys into a consistent format
-- preparing data for joins
+- Data type-ok harmonizálása
+- Columnok standardizálása
+- Szöveges értékek trimelése
+- Key-ek egységes formátumra alakítása
+- Adatok előkészítése a joinokhoz
 
-At the end of this exercise you will have three STAGE tables:
+A gyakorlat végére három STAGE table-lel fogsz rendelkezni:
 
 ```text
 <your_name>_stage.sales_stage
@@ -26,34 +26,34 @@ At the end of this exercise you will have three STAGE tables:
 
 ---
 
-# Why Do We Need a STAGE Layer?
+# Miért van szükség STAGE layerre?
 
-Many people are tempted to join and aggregate data directly from the RAW tables.
+Sokan hajlamosak közvetlenül a RAW table-ökből joinolni és aggregálni az adatokat.
 
-This usually works at the beginning.
+Ez kezdetben általában működik.
 
-Over time however:
+Idővel azonban:
 
-- source systems change
-- data types change
-- file formats change
-- additional business rules appear
+- változnak a source systemek
+- változnak a data type-ok
+- változnak a file formatok
+- további business rule-ok jelennek meg
 
-The STAGE layer acts as a protective boundary between source systems and business logic.
+A STAGE layer védelmi határként szolgál a source systemek és a business logic között.
 
-A good rule of thumb is:
+Jó ökölszabály:
 
 ```text
-RAW = What we received
+RAW = Amit megkaptunk
 
-STAGE = What we trust
+STAGE = Amiben megbízunk
 ```
 
 ---
 
-# Review the Data Warehouse Layers
+# A data warehouse layerek áttekintése
 
-Our warehouse currently looks like this:
+A warehouse jelenleg így néz ki:
 
 ```text
 RAW
@@ -62,7 +62,7 @@ RAW
 └── mli_mapping
 ```
 
-Today we will create:
+Ma az alábbiakat hozzuk létre:
 
 ```text
 STAGE
@@ -71,7 +71,7 @@ STAGE
 └── mapping_stage
 ```
 
-Later we will build:
+Később az alábbiakat építjük fel:
 
 ```text
 INTERMEDIATE
@@ -83,21 +83,21 @@ GOLD
 
 ---
 
-# Open sales_stage.sqlx
+# A sales_stage.sqlx megnyitása
 
-Navigate to:
+Navigálj ide:
 
 ```text
 definitions/sales_stage.sqlx
 ```
 
-Review the model.
+Tekintsd át a modelt.
 
 ---
 
-# Review the Configuration Block
+# A configuration block áttekintése
 
-At the top of the file you should see:
+A fájl tetején az alábbit kell látnod:
 
 ```sql
 config {
@@ -107,75 +107,75 @@ config {
 }
 ```
 
-This tells Dataform:
+Ez azt mondja meg a Dataformnak, hogy:
 
-- create a table
-- place it into the STAGE dataset
-- name the table sales_stage
+- hozzon létre egy table-t
+- helyezze a STAGE datasetbe
+- nevezze el a table-t `sales_stage`-nek
 
-Notice that we do not hardcode:
+Figyeld meg, hogy nem hardcode-oljuk ezt:
 
 ```text
 janos_stage
 ```
 
-or
+vagy
 
 ```text
 barni_stage
 ```
 
-The dataset is generated automatically from the username.
+A dataset automatikusan generálódik a username alapján.
 
 ---
 
-# Review the Source Table
+# A source table áttekintése
 
-Locate:
+Keresd meg:
 
 ```sql
 FROM `${raw_dataset}.sales_data`
 ```
 
-This is our RAW source table.
+Ez a RAW source table-ünk.
 
-Remember:
+Ne feledd:
 
 ```text
-RAW tables are never modified.
+A RAW table-öket soha nem módosítjuk.
 ```
 
-Every transformation happens in a new layer.
+Minden transformation egy új layerben történik.
 
 ---
 
-# Review the Data Type Conversion
+# A data type conversion áttekintése
 
-Locate:
+Keresd meg:
 
 ```sql
 CAST(MLI AS STRING) AS MLI
 ```
 
-Why is this needed?
+Miért van erre szükség?
 
-Because the CSV import created:
+Mert a CSV import az alábbit hozta létre:
 
 ```text
 MLI = INTEGER
 ```
 
-However:
+Azonban az:
 
 ```text
 MLI
 ```
 
-is actually a business key.
+valójában egy business key.
 
-Business keys are usually treated as strings.
+A business key-eket általában stringként kezeljük.
 
-This avoids future problems when:
+Ezzel elkerülhetők a későbbi problémák, amikor az alábbiakat:
 
 ```text
 0001
@@ -184,27 +184,27 @@ This avoids future problems when:
 1000
 ```
 
-need to be represented.
+kell ábrázolni.
 
 ---
 
-# Review Additional Standardization
+# A további standardizálás áttekintése
 
-Notice:
+Figyeld meg:
 
 ```sql
 UPPER(Market)
 ```
 
-and
+és
 
 ```sql
 TRIM(DealerCode)
 ```
 
-These are simple but important transformations.
+Ezek egyszerű, de fontos transformationök.
 
-They help prevent issues such as:
+Segítenek elkerülni például azt, hogy az alábbi értékeket:
 
 ```text
 HU
@@ -213,39 +213,39 @@ hu
 HU
 ```
 
-being treated as different values.
+különböző értékekként kezeljük.
 
 ---
 
-# Compile sales_stage.sqlx
+# A sales_stage.sqlx compile-olása
 
-Click:
+Kattints erre:
 
 ```text
 Compile
 ```
 
-The model should compile successfully.
+A modelnek sikeresen kell compile-olódnia.
 
 ---
 
-# Open dealer_stage.sqlx
+# A dealer_stage.sqlx megnyitása
 
-Navigate to:
+Navigálj ide:
 
 ```text
 definitions/dealer_stage.sqlx
 ```
 
-Review the model.
+Tekintsd át a modelt.
 
 ---
 
-# Purpose of dealer_stage
+# A dealer_stage célja
 
-This model prepares dealer master data.
+Ez a model előkészíti a dealer master data-t.
 
-The transformations are intentionally simple:
+A transformationök szándékosan egyszerűek:
 
 ```sql
 UPPER(Market)
@@ -255,37 +255,37 @@ TRIM(DealerCode)
 TRIM(DealerName)
 ```
 
-The goal is consistency.
+A cél a konzisztencia.
 
-Dealer information will later be joined with sales data.
-
----
-
-# Compile dealer_stage.sqlx
-
-Verify that the model compiles successfully.
+A dealer informationt később a sales data-hoz joinoljuk.
 
 ---
 
-# Open mapping_stage.sqlx
+# A dealer_stage.sqlx compile-olása
 
-Navigate to:
+Ellenőrizd, hogy a model sikeresen compile-olódik-e.
+
+---
+
+# A mapping_stage.sqlx megnyitása
+
+Navigálj ide:
 
 ```text
 definitions/mapping_stage.sqlx
 ```
 
-Review the model.
+Tekintsd át a modelt.
 
 ---
 
-# Purpose of mapping_stage
+# A mapping_stage célja
 
-This table contains business mappings.
+Ez a table business mappingeket tartalmaz.
 
-In the original Alteryx workflows this mapping came from an Excel file.
+Az eredeti Alteryx workflow-kban ez a mapping egy Excel-fájlból származott.
 
-Examples:
+Példák:
 
 ```text
 MLI
@@ -294,93 +294,93 @@ PCT
 MPL_Code
 ```
 
-The purpose of this model is to prepare those values for later enrichment.
+A model célja ezeknek az értékeknek az előkészítése a későbbi enrichmenthez.
 
 ---
 
-# Review the MLI Conversion
+# Az MLI conversion áttekintése
 
-Locate:
+Keresd meg:
 
 ```sql
 CAST(MLI AS STRING) AS MLI
 ```
 
-Again we convert MLI to STRING.
+Az MLI-t ismét STRING-gé alakítjuk.
 
-This ensures that:
+Ez biztosítja, hogy:
 
 ```text
 sales_stage.MLI
 ```
 
-and
+és
 
 ```text
 mapping_stage.MLI
 ```
 
-have the same data type.
+ugyanazzal a data type-pal rendelkezzen.
 
-This is essential for successful joins.
-
----
-
-# Compile mapping_stage.sqlx
-
-Verify successful compilation.
+Ez elengedhetetlen a sikeres joinokhoz.
 
 ---
 
-# Execute Individual Models
+# A mapping_stage.sqlx compile-olása
 
-We will now execute the three STAGE models.
+Ellenőrizd, hogy a compilation sikeres-e.
 
-Run:
+---
+
+# Az egyes modellek futtatása
+
+Most futtatjuk a három STAGE modelt.
+
+Futtasd:
 
 ```text
 sales_stage
 ```
 
-Wait until execution completes.
+Várd meg, amíg az execution befejeződik.
 
 ---
 
-Run:
+Futtasd:
 
 ```text
 dealer_stage
 ```
 
-Wait until execution completes.
+Várd meg, amíg az execution befejeződik.
 
 ---
 
-Run:
+Futtasd:
 
 ```text
 mapping_stage
 ```
 
-Wait until execution completes.
+Várd meg, amíg az execution befejeződik.
 
 ---
 
-# Verify the Generated Tables
+# A létrehozott table-ök ellenőrzése
 
-Navigate to:
+Navigálj ide:
 
 ```text
 BigQuery Studio
 ```
 
-Open:
+Nyisd meg:
 
 ```text
 <your_name>_stage
 ```
 
-You should see:
+Az alábbiakat kell látnod:
 
 ```text
 sales_stage
@@ -390,9 +390,9 @@ mapping_stage
 
 ---
 
-# Inspect sales_stage
+# A sales_stage vizsgálata
 
-Run:
+Futtasd:
 
 ```sql
 SELECT *
@@ -400,7 +400,7 @@ FROM `<your_name>_stage.sales_stage`
 LIMIT 20;
 ```
 
-Review:
+Tekintsd át:
 
 - Market
 - DealerCode
@@ -411,49 +411,49 @@ Review:
 
 ---
 
-# Verify the MLI Data Type
+# Az MLI data type ellenőrzése
 
-Open the schema.
+Nyisd meg a schemát.
 
-Confirm that:
+Ellenőrizd, hogy az:
 
 ```text
 MLI
 ```
 
-is now:
+most már:
 
 ```text
 STRING
 ```
 
-This is one of the key objectives of the STAGE layer.
+Ez a STAGE layer egyik fő célkitűzése.
 
 ---
 
-# Compare RAW vs STAGE
+# A RAW és a STAGE összehasonlítása
 
 RAW:
 
 ```text
-Original source structure
+Eredeti source structure
 ```
 
 STAGE:
 
 ```text
-Standardized structure
+Standardizált structure
 ```
 
-Notice that the business meaning has not changed.
+Figyeld meg, hogy a business meaning nem változott.
 
-We have only improved consistency and usability.
+Csak a konzisztencián és a használhatóságon javítottunk.
 
 ---
 
 # Checkpoint
 
-You should now have:
+Mostanra rendelkezned kell az alábbiakkal:
 
 ✓ sales_stage
 
@@ -461,21 +461,21 @@ You should now have:
 
 ✓ mapping_stage
 
-✓ Successful execution
+✓ Sikeres execution
 
-✓ Verified schemas
+✓ Ellenőrzött schemák
 
-✓ Standardized business keys
+✓ Standardizált business key-ek
 
 ---
 
-# What Comes Next?
+# Mi következik?
 
-The STAGE layer prepares the data.
+A STAGE layer előkészíti az adatokat.
 
-In the next exercise we will create the first business transformation layer.
+A következő gyakorlatban létrehozzuk az első business transformation layert.
 
-We will join:
+Joinoljuk az alábbiakat:
 
 ```text
 sales_stage
@@ -485,4 +485,4 @@ dealer_stage
 mapping_stage
 ```
 
-to create an enriched dataset that contains both transactional and business context information.
+így létrehozunk egy enriched datasetet, amely transactional és business context informationt egyaránt tartalmaz.

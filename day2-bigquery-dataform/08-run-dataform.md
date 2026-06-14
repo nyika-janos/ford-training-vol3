@@ -1,24 +1,24 @@
-# 08 - Execute the Complete Dataform Pipeline
+# 08 - A teljes Dataform pipeline futtatása
 
-## Objective
+## Cél
 
-In this final exercise we will execute the entire warehouse pipeline from end to end.
+Ebben az utolsó gyakorlatban end-to-end futtatjuk a teljes warehouse pipeline-t.
 
-The goal is to understand:
+A cél az alábbiak megértése:
 
 - execution order
-- dependencies
+- dependencyk
 - lineage
-- assertions
+- assertionök
 - monitoring
 
-At the end of this exercise you will have a fully functioning Dataform pipeline that transforms RAW data into a reporting-ready GOLD table.
+A gyakorlat végére egy teljesen működő Dataform pipeline-nal rendelkezel, amely a RAW adatokat reporting-ready GOLD table-lé alakítja.
 
 ---
 
-# What Have We Built?
+# Mit építettünk fel?
 
-Over the previous exercises we created:
+Az előző gyakorlatok során az alábbiakat hoztuk létre:
 
 ```text
 RAW
@@ -40,58 +40,58 @@ GOLD
 └── sales_gold
 ```
 
-This is already a simplified version of a real-world cloud data warehouse.
+Ez már egy valós cloud data warehouse egyszerűsített változata.
 
 ---
 
-# Why Run the Entire Pipeline?
+# Miért futtatjuk a teljes pipeline-t?
 
-Until now we executed individual models.
+Eddig különálló modelleket futtattunk.
 
-In production environments we typically execute:
+Production environmentekben általában ezt futtatjuk:
 
 ```text
-The entire pipeline
+A teljes pipeline
 ```
 
-rather than individual tables.
+az egyes table-ök helyett.
 
-This ensures:
+Ez biztosítja:
 
-- correct execution order
-- dependency management
-- data quality validation
-- reproducibility
+- a helyes execution ordert
+- a dependency managementet
+- a data quality validationt
+- a reprodukálhatóságot
 
 ---
 
-# Open Dataform
+# A Dataform megnyitása
 
-Navigate to:
+Navigálj ide:
 
 ```text
 Dataform
 ```
 
-Open:
+Nyisd meg:
 
 ```text
 <your_name>_training_dataform
 ```
 
-and select your:
+és válaszd ki a:
 
 ```text
 development
 ```
 
-workspace.
+workspace-t.
 
 ---
 
-# Review the Repository
+# A repository áttekintése
 
-Verify that the following files exist:
+Ellenőrizd, hogy léteznek-e az alábbi fájlok:
 
 ```text
 definitions/
@@ -109,37 +109,37 @@ includes/
 
 ---
 
-# Review workflow_settings.yaml
+# A workflow_settings.yaml áttekintése
 
-Open:
+Nyisd meg:
 
 ```text
 workflow_settings.yaml
 ```
 
-Verify that your username is configured correctly.
+Ellenőrizd, hogy megfelelően van-e konfigurálva a username-ed.
 
-Example:
+Példa:
 
 ```yaml
 vars:
   username: "janos"
 ```
 
-or:
+vagy:
 
 ```yaml
 vars:
   username: "barni"
 ```
 
-This setting determines which datasets Dataform will use.
+Ez a setting határozza meg, hogy a Dataform mely dataseteket használja.
 
 ---
 
-# Review Generated Datasets
+# A generált datasetek áttekintése
 
-Remember that the username automatically generates:
+Ne feledd, hogy a username automatikusan generálja az alábbiakat:
 
 ```text
 <username>_raw
@@ -147,7 +147,7 @@ Remember that the username automatically generates:
 <username>_gold
 ```
 
-For example:
+Például:
 
 ```text
 janos_raw
@@ -155,13 +155,13 @@ janos_stage
 janos_gold
 ```
 
-These names are created through:
+Ezek a nevek az alábbiakon keresztül jönnek létre:
 
 ```text
 workflow_settings.yaml
 ```
 
-and
+és
 
 ```text
 includes/config.js
@@ -169,40 +169,40 @@ includes/config.js
 
 ---
 
-# Compile the Repository
+# A repository compile-olása
 
-Click:
+Kattints erre:
 
 ```text
 Compile
 ```
 
-The repository should compile successfully.
+A repositorynak sikeresen kell compile-olódnia.
 
-If compilation fails:
+Ha a compilation sikertelen:
 
-- verify workflow_settings.yaml
-- verify the username
-- verify all SQLX files are present
-- verify includes/config.js exists
+- ellenőrizd a `workflow_settings.yaml` fájlt
+- ellenőrizd a username-et
+- ellenőrizd, hogy minden SQLX-fájl megtalálható-e
+- ellenőrizd, hogy létezik-e az `includes/config.js`
 
 ---
 
-# Review the Dependency Graph
+# A Dependency Graph áttekintése
 
-Open:
+Nyisd meg:
 
 ```text
 Lineage
 ```
 
-or
+vagy
 
 ```text
 Dependency Graph
 ```
 
-You should see something similar to:
+Az alábbihoz hasonlót kell látnod:
 
 ```text
 sales_stage
@@ -222,21 +222,21 @@ sales_gold
 
 ---
 
-# Understanding the Dependency Graph
+# A Dependency Graph megértése
 
-Notice that:
+Figyeld meg, hogy a:
 
 ```text
 sales_gold
 ```
 
-depends on:
+ettől függ:
 
 ```text
 sales_enriched
 ```
 
-which depends on:
+amely az alábbiaktól függ:
 
 ```text
 sales_stage
@@ -244,21 +244,19 @@ dealer_stage
 mapping_stage
 ```
 
-These dependencies were created automatically through:
+Ezeket a dependencyket az alábbi statementek automatikusan hozták létre:
 
 ```sql
 ${ref("...")}
 ```
 
-statements.
-
-No manual dependency configuration was required.
+Nem volt szükség manuális dependency configurationre.
 
 ---
 
-# Why Is This Important?
+# Miért fontos ez?
 
-Imagine a warehouse containing:
+Képzelj el egy warehouse-t, amely ennyi table-t tartalmaz:
 
 ```text
 50 tables
@@ -266,15 +264,15 @@ Imagine a warehouse containing:
 500 tables
 ```
 
-Manually tracking dependencies becomes impossible.
+A dependencyk manuális követése lehetetlenné válik.
 
-Dataform manages this automatically.
+A Dataform ezt automatikusan kezeli.
 
 ---
 
-# Start a Pipeline Execution
+# Pipeline execution indítása
 
-Click:
+Kattints erre:
 
 ```text
 Start Execution
@@ -282,42 +280,40 @@ Start Execution
 
 ---
 
-# Select Execution Mode
+# Execution mode kiválasztása
 
-Choose:
+Válaszd ki:
 
 ```text
 Run all actions
 ```
 
-This tells Dataform to execute the complete transformation pipeline.
+Ez arra utasítja a Dataformot, hogy futtassa a teljes transformation pipeline-t.
 
 ---
 
-# Start Execution
+# Execution indítása
 
-Click:
+Kattints erre:
 
 ```text
 Start Execution
 ```
 
-Dataform will now:
+A Dataform most automatikusan:
 
-1. Build STAGE models
-2. Build sales_enriched
-3. Build sales_gold
-4. Execute assertions
-
-automatically.
+1. Felépíti a STAGE modelleket
+2. Felépíti a `sales_enriched` modelt
+3. Felépíti a `sales_gold` modelt
+4. Futtatja az assertionöket
 
 ---
 
-# Observe the Execution Graph
+# Az Execution Graph megfigyelése
 
-Watch the execution progress.
+Figyeld az execution folyamatát.
 
-You should see something similar to:
+Az alábbihoz hasonlót kell látnod:
 
 ```text
 sales_stage
@@ -331,58 +327,58 @@ sales_gold
 assertions
 ```
 
-Notice that Dataform automatically determines the correct execution order.
+Figyeld meg, hogy a Dataform automatikusan meghatározza a helyes execution ordert.
 
 ---
 
-# Review Execution Details
+# Az execution részleteinek áttekintése
 
-Open the execution details page.
+Nyisd meg az execution details oldalt.
 
-Observe:
+Figyeld meg:
 
 - execution duration
 - execution order
 - model status
 - assertion status
 
-This information is extremely useful during troubleshooting.
+Ez az információ rendkívül hasznos a troubleshooting során.
 
 ---
 
-# Verify Successful Completion
+# A sikeres befejezés ellenőrzése
 
-All objects should show:
+Minden objectnek ezt kell mutatnia:
 
 ```text
 SUCCESS
 ```
 
-If everything completed successfully:
+Ha minden sikeresen befejeződött:
 
-✓ Pipeline executed
+✓ A pipeline lefutott
 
-✓ Assertions passed
+✓ Az assertionök sikeresek
 
-✓ GOLD table refreshed
+✓ A GOLD table frissült
 
 ---
 
-# Verify the STAGE Dataset
+# A STAGE dataset ellenőrzése
 
-Navigate to:
+Navigálj ide:
 
 ```text
 BigQuery Studio
 ```
 
-Open:
+Nyisd meg:
 
 ```text
 <your_name>_stage
 ```
 
-Verify the following tables exist:
+Ellenőrizd, hogy léteznek-e az alábbi table-ök:
 
 ```text
 sales_stage
@@ -393,27 +389,27 @@ sales_enriched
 
 ---
 
-# Verify the GOLD Dataset
+# A GOLD dataset ellenőrzése
 
-Open:
+Nyisd meg:
 
 ```text
 <your_name>_gold
 ```
 
-Verify:
+Ellenőrizd, hogy a:
 
 ```text
 sales_gold
 ```
 
-exists.
+létezik-e.
 
 ---
 
-# Review the Final Results
+# A végeredmények áttekintése
 
-Run:
+Futtasd:
 
 ```sql
 SELECT *
@@ -422,7 +418,7 @@ ORDER BY Total_Revenue DESC
 LIMIT 20;
 ```
 
-Review:
+Tekintsd át:
 
 - Market
 - Basket
@@ -430,19 +426,19 @@ Review:
 - Total_Revenue
 - Transaction_Count
 
-These are business-facing metrics.
+Ezek business-facing metrikák.
 
 ---
 
-# Review the Assertions
+# Az assertionök áttekintése
 
-Open:
+Nyisd meg:
 
 ```text
 definitions/sales_gold.sqlx
 ```
 
-Review:
+Tekintsd át:
 
 ```sql
 assertions: {
@@ -451,69 +447,69 @@ assertions: {
 }
 ```
 
-Remember:
+Ne feledd:
 
-These validations are executed automatically whenever the model runs.
+Ezek a validationök automatikusan lefutnak a model minden futtatásakor.
 
 ---
 
-# What Happens If an Assertion Fails?
+# Mi történik, ha egy assertion sikertelen?
 
-Imagine that tomorrow:
+Képzeld el, hogy holnap az alábbi érték:
 
 ```text
 Basket = NULL
 ```
 
-appears in the GOLD table.
+megjelenik a GOLD table-ben.
 
-Dataform will:
+A Dataform folyamata:
 
 ```text
-Execute Assertion
+Assertion futtatása
         ↓
-Assertion Fails
+Sikertelen assertion
         ↓
-Execution Fails
+Sikertelen execution
 ```
 
-The issue is detected before bad data reaches reporting tools.
+A problémát még azelőtt észleljük, hogy a hibás adat elérné a reporting toolokat.
 
 ---
 
-# Why Is This Important?
+# Miért fontos ez?
 
 Without validation:
 
 ```text
-Broken Data
+Hibás adatok
       ↓
 Power BI
       ↓
-Incorrect Reports
+Hibás reportok
       ↓
-Incorrect Decisions
+Hibás döntések
 ```
 
 With validation:
 
 ```text
-Broken Data
+Hibás adatok
       ↓
-Assertion Failure
+Assertion failure
       ↓
-Pipeline Stops
+A pipeline leáll
 ```
 
-Problems are detected much earlier.
+A problémákat így sokkal korábban észleljük.
 
 ---
 
-# Compare With Alteryx
+# Összehasonlítás az Alteryxszel
 
-Think about the workflows we reviewed at the beginning of the training.
+Gondolj a training elején áttekintett workflow-kra.
 
-In Alteryx:
+Az Alteryxben:
 
 ```text
 Input
@@ -529,7 +525,7 @@ Summarize
 Output
 ```
 
-In GCP:
+A GCP-ben:
 
 ```text
 RAW
@@ -541,7 +537,7 @@ INTERMEDIATE
 GOLD
 ```
 
-implemented through:
+az alábbiakon keresztül implementálva:
 
 ```text
 BigQuery
@@ -549,15 +545,15 @@ BigQuery
 Dataform
 ```
 
-The business logic is almost identical.
+A business logic szinte azonos.
 
-The implementation approach is different.
+Az implementation approach eltérő.
 
 ---
 
-# What Did We Learn Today?
+# Mit tanultunk ma?
 
-Today we learned:
+Ma az alábbiakat tanultuk:
 
 ✓ BigQuery warehouse structure
 
@@ -569,23 +565,23 @@ Today we learned:
 
 ✓ GOLD layer
 
-✓ Dataform repositories
+✓ Dataform repositoryk
 
-✓ Dataform models
+✓ Dataform modellek
 
-✓ ref() dependencies
+✓ `ref()` dependencyk
 
 ✓ Lineage
 
-✓ Assertions
+✓ Assertionök
 
-✓ Automated data quality validation
+✓ Automatizált data quality validation
 
 ---
 
-# Final Architecture
+# Végső architecture
 
-You have successfully built:
+Sikeresen felépítetted az alábbit:
 
 ```text
 CSV Files
@@ -606,17 +602,17 @@ sales_gold
 Power BI / Excel
 ```
 
-This is the same architectural pattern used by many modern cloud data platforms.
+Ugyanezt az architectural patternt használja számos modern cloud data platform.
 
 ---
 
-# Looking Ahead
+# Előretekintés
 
-Today we loaded the source files manually.
+Ma manuálisan töltöttük be a source fájlokat.
 
-Tomorrow we will automate the ingestion process.
+Holnap automatizáljuk az ingestion processt.
 
-Instead of manually uploading CSV files into BigQuery:
+A CSV-fájlok BigQuerybe történő manuális feltöltése helyett:
 
 ```text
 Excel File
@@ -632,8 +628,8 @@ Dataform
 GOLD Tables
 ```
 
-The Dataform pipeline we built today will remain unchanged.
+A ma felépített Dataform pipeline változatlan marad.
 
-Only the ingestion process becomes automated.
+Csak az ingestion process válik automatizálttá.
 
-This separation of responsibilities is one of the key advantages of a layered architecture.
+A felelősségi körök ilyen szétválasztása a layered architecture egyik fő előnye.

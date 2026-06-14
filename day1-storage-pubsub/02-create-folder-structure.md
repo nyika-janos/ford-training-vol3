@@ -1,30 +1,30 @@
-# Day 1 - Exercise 2
+# 1. nap - 2. gyakorlat
 
-# Create the Landing Zone Structure
+# A Landing Zone structure létrehozása
 
-## Objective
+## Cél
 
-Create a basic enterprise-style landing zone structure.
-
----
-
-## Estimated Time
-
-5 minutes
+Hozz létre egy egyszerű, enterprise-style Landing Zone structure-t.
 
 ---
 
-## Background
+## Becsült idő
 
-Cloud Storage is an object store.
-
-Folders are logical prefixes rather than traditional directories.
-
-Even so, most organizations use a standard structure to separate incoming, processed and exported files.
+5 perc
 
 ---
 
-## Target Structure
+## Háttér
+
+A Cloud Storage egy object store.
+
+A folderek hagyományos directoryk helyett logical prefixek.
+
+Ennek ellenére a legtöbb organization standard structure-t használ az érkező, feldolgozott és exportált fájlok elkülönítésére.
+
+---
+
+## Target structure
 
 ```
 landing/
@@ -35,17 +35,17 @@ export/
 
 ---
 
-## Steps
+## Lépések
 
-### Step 1
+### 1. lépés
 
-Open your bucket.
+Nyisd meg a bucketedet.
 
 ---
 
-### Step 2
+### 2. lépés
 
-Create folder:
+Hozd létre ezt a foldert:
 
 ```
 landing/
@@ -53,9 +53,9 @@ landing/
 
 ---
 
-### Step 3
+### 3. lépés
 
-Create folder:
+Hozd létre ezt a foldert:
 
 ```
 archive/
@@ -63,9 +63,9 @@ archive/
 
 ---
 
-### Step 4
+### 4. lépés
 
-Create folder:
+Hozd létre ezt a foldert:
 
 ```
 error/
@@ -73,9 +73,9 @@ error/
 
 ---
 
-### Step 5
+### 5. lépés
 
-Create folder:
+Hozd létre ezt a foldert:
 
 ```
 export/
@@ -83,9 +83,9 @@ export/
 
 ---
 
-## Validation
+## Ellenőrzés
 
-Verify that all four folders are visible.
+Ellenőrizd, hogy mind a négy folder látható-e.
 
 ```
 landing/
@@ -96,11 +96,11 @@ export/
 
 ---
 
-## Discussion
+## Megbeszélés
 
-Where would you place:
+Hová helyeznéd az alábbiakat?
 
-- Incoming Excel files?
-- Successfully processed files?
-- Invalid files?
-- Generated reports?
+- Beérkező Excel-fájlok
+- Sikeresen feldolgozott fájlok
+- Érvénytelen fájlok
+- Generált reportok

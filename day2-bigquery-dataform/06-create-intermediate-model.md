@@ -1,41 +1,41 @@
-# 06 - Create the INTERMEDIATE Layer
+# 06 - Az INTERMEDIATE layer létrehozása
 
-## Objective
+## Cél
 
-In this exercise we will build the first business transformation layer of the warehouse.
+Ebben a gyakorlatban felépítjük a warehouse első business transformation layerét.
 
-The STAGE layer prepared and standardized our source data.
+A STAGE layer előkészítette és standardizálta a source data-t.
 
-Now we will combine those datasets into a business-friendly structure that contains all information required for reporting and analysis.
+Most ezeket a dataseteket egy business-friendly structure-ben egyesítjük, amely minden, a reportinghoz és analysishez szükséges információt tartalmaz.
 
-At the end of this exercise we will have:
+A gyakorlat végére rendelkezünk majd az alábbival:
 
 ```text
 <your_name>_stage.sales_enriched
 ```
 
-This table will contain:
+Ez a table az alábbiakat tartalmazza:
 
-- sales transactions
+- sales transactionök
 - dealer information
 - product classification information
 
-all in a single dataset.
+mindezt egyetlen datasetben.
 
 ---
 
-# What is an INTERMEDIATE Layer?
+# Mi az INTERMEDIATE layer?
 
-The INTERMEDIATE layer is where business logic begins.
+Az INTERMEDIATE layerben kezdődik a business logic.
 
-The purpose of this layer is to:
+A layer célja:
 
-- join datasets
-- enrich transactions
-- calculate derived fields
-- prepare reusable datasets
+- datasetek joinolása
+- transactionök enrich-elése
+- derived fieldek kiszámítása
+- újrafelhasználható datasetek előkészítése
 
-Think of it as:
+A folyamatban elfoglalt helye:
 
 ```text
 RAW
@@ -47,13 +47,13 @@ INTERMEDIATE
 GOLD
 ```
 
-The INTERMEDIATE layer should be reusable by multiple GOLD models.
+Az INTERMEDIATE layernek több GOLD model által is újrafelhasználhatónak kell lennie.
 
 ---
 
-# Why Not Join Everything in the GOLD Layer?
+# Miért nem a GOLD layerben joinolunk mindent?
 
-A common beginner mistake is:
+Gyakori kezdő hiba:
 
 ```text
 RAW
@@ -61,15 +61,15 @@ RAW
 GOLD
 ```
 
-with a huge SQL statement.
+egyetlen hatalmas SQL statementtel.
 
-That works initially, but becomes difficult to maintain.
+Ez kezdetben működik, de nehezen karbantarthatóvá válik.
 
-Instead we separate concerns:
+Ehelyett szétválasztjuk a felelősségi köröket:
 
 ```text
 STAGE
-= clean data
+= tiszta adatok
 
 INTERMEDIATE
 = business enrichment
@@ -78,25 +78,25 @@ GOLD
 = reporting
 ```
 
-This makes troubleshooting and maintenance much easier.
+Ez jelentősen megkönnyíti a troubleshootingot és a karbantartást.
 
 ---
 
-# Open sales_enrich.sqlx
+# A sales_enrich.sqlx megnyitása
 
-Navigate to:
+Navigálj ide:
 
 ```text
 definitions/sales_enrich.sqlx
 ```
 
-This is our INTERMEDIATE model.
+Ez az INTERMEDIATE modelünk.
 
 ---
 
-# Review the Configuration Block
+# A configuration block áttekintése
 
-At the top of the file you should see:
+A fájl tetején az alábbit kell látnod:
 
 ```sql
 config {
@@ -106,62 +106,62 @@ config {
 }
 ```
 
-Notice:
+Figyeld meg, hogy a:
 
 ```text
 sales_enriched
 ```
 
-is still stored in the STAGE dataset.
+továbbra is a STAGE datasetben található.
 
-For training purposes this is perfectly acceptable.
+A training céljaira ez teljesen megfelelő.
 
-In larger environments many teams create a dedicated:
+Nagyobb environmentekben sok team külön:
 
 ```text
 intermediate
 ```
 
-dataset.
+datasetet hoz létre.
 
 ---
 
-# Review the Purpose of This Model
+# A model céljának áttekintése
 
-The objective of this model is to combine:
+A model célja ennek:
 
 ```text
 sales_stage
 ```
 
-with:
+az összekapcsolása ezzel:
 
 ```text
 dealer_stage
 ```
 
-and:
+és ezzel:
 
 ```text
 mapping_stage
 ```
 
-to create a richer dataset.
+egy gazdagabb dataset létrehozásához.
 
 ---
 
-# Understanding the Business Logic
+# A business logic megértése
 
-Before enrichment:
+Enrichment előtt:
 
 ```text
 DealerCode = D001
 MLI = 1001
 ```
 
-Those values are technically correct, but not particularly useful for reporting.
+Ezek az értékek technikailag helyesek, de a reporting szempontjából nem különösebben hasznosak.
 
-Business users usually need:
+A business usereknek általában az alábbiakra van szükségük:
 
 ```text
 Dealer Name
@@ -170,21 +170,21 @@ PCT
 MPL Code
 ```
 
-alongside the transaction data.
+a transaction data mellett.
 
-This model provides that context.
+Ez a model biztosítja ezt a contextet.
 
 ---
 
-# Review the First Dataform Dependency
+# Az első Dataform dependency áttekintése
 
-Locate:
+Keresd meg:
 
 ```sql
 FROM ${ref("sales_stage")} s
 ```
 
-This is our first use of:
+Itt használjuk először a:
 
 ```text
 ref()
@@ -192,46 +192,46 @@ ref()
 
 ---
 
-# What Does ref() Do?
+# Mit csinál a ref()?
 
-Instead of writing:
+Ahelyett, hogy ezt írnánk:
 
 ```sql
 FROM janos_stage.sales_stage
 ```
 
-we use:
+ezt használjuk:
 
 ```sql
 ${ref("sales_stage")}
 ```
 
-Dataform automatically:
+A Dataform automatikusan:
 
-- resolves the table name
-- resolves the dataset
-- creates dependencies
-- builds lineage
+- feloldja a table nevét
+- feloldja a datasetet
+- létrehozza a dependencyket
+- felépíti a lineage-et
 
-This is one of the biggest advantages of Dataform.
+Ez a Dataform egyik legnagyobb előnye.
 
 ---
 
-# Review the Dealer Join
+# A dealer join áttekintése
 
-Locate:
+Keresd meg:
 
 ```sql
 LEFT JOIN ${ref("dealer_stage")} d
 ```
 
-with:
+ezzel:
 
 ```sql
 ON s.DealerCode = d.DealerCode
 ```
 
-This enriches the sales records with:
+Ez az alábbival enrich-eli a sales recordokat:
 
 ```text
 DealerName
@@ -239,21 +239,21 @@ DealerName
 
 ---
 
-# Review the Mapping Join
+# A mapping join áttekintése
 
-Locate:
+Keresd meg:
 
 ```sql
 LEFT JOIN ${ref("mapping_stage")} m
 ```
 
-with:
+ezzel:
 
 ```sql
 ON s.MLI = m.MLI
 ```
 
-This enriches transactions with:
+Ez az alábbiakkal enrich-eli a transactionöket:
 
 ```text
 Basket
@@ -263,37 +263,37 @@ MPL_Code
 
 ---
 
-# Why Did We Convert MLI to STRING Earlier?
+# Miért alakítottuk korábban STRING-gé az MLI-t?
 
-Remember:
+Ne feledd, hogy a:
 
 ```text
 sales_data.MLI
 ```
 
-and
+és
 
 ```text
 mli_mapping.MLI
 ```
 
-originally arrived as INTEGER values.
+eredetileg INTEGER értékként érkezett.
 
-In the STAGE layer we standardized both sides:
+A STAGE layerben mindkét oldalt erre standardizáltuk:
 
 ```text
 STRING
 ```
 
-Now this join works reliably.
+Így ez a join már megbízhatóan működik.
 
-This is a perfect example of why the STAGE layer exists.
+Ez tökéletes példa arra, hogy miért létezik a STAGE layer.
 
 ---
 
-# Review the Output Columns
+# Az output columnok áttekintése
 
-The final result contains:
+A végeredmény az alábbiakat tartalmazza:
 
 ```text
 Sales Data
@@ -303,7 +303,7 @@ Dealer Information
 Classification Information
 ```
 
-Examples:
+Példák:
 
 ```text
 Market
@@ -318,37 +318,37 @@ Qty
 Revenue
 ```
 
-This dataset is already much closer to a business reporting table.
+Ez a dataset már sokkal közelebb áll egy business reporting table-höz.
 
 ---
 
-# Compile the Model
+# A model compile-olása
 
-Click:
+Kattints erre:
 
 ```text
 Compile
 ```
 
-The model should compile successfully.
+A modelnek sikeresen kell compile-olódnia.
 
 ---
 
-# Review the Dependency Graph
+# A Dependency Graph áttekintése
 
-Open:
+Nyisd meg:
 
 ```text
 Lineage
 ```
 
-or
+vagy
 
 ```text
 Dependency Graph
 ```
 
-You should see something similar to:
+Az alábbihoz hasonlót kell látnod:
 
 ```text
 sales_stage
@@ -365,57 +365,57 @@ sales_enriched
 
 ---
 
-# Why Is Lineage Important?
+# Miért fontos a lineage?
 
-Lineage helps answer questions such as:
-
-```text
-Where did this column come from?
-```
-
-or:
+A lineage segít megválaszolni az alábbi kérdéseket:
 
 ```text
-Which models will be affected if I change a source table?
+Honnan származik ez a column?
 ```
 
-In larger projects this becomes extremely valuable.
+vagy:
+
+```text
+Mely modellekre lesz hatással, ha módosítok egy source table-t?
+```
+
+Nagyobb projectekben ez rendkívül értékessé válik.
 
 ---
 
-# Execute sales_enriched
+# A sales_enriched futtatása
 
-Run:
+Futtasd:
 
 ```text
 sales_enriched
 ```
 
-Wait for the execution to complete.
+Várd meg, amíg az execution befejeződik.
 
 ---
 
-# Verify the Output Table
+# Az output table ellenőrzése
 
-Navigate to:
+Navigálj ide:
 
 ```text
 BigQuery Studio
 ```
 
-Open:
+Nyisd meg:
 
 ```text
 <your_name>_stage.sales_enriched
 ```
 
-Preview the data.
+Tekintsd meg az adatok Preview-ját.
 
 ---
 
-# Validate the Join Results
+# A join eredmények validálása
 
-Run:
+Futtasd:
 
 ```sql
 SELECT *
@@ -423,9 +423,9 @@ FROM `<your_name>_stage.sales_enriched`
 LIMIT 20;
 ```
 
-Review the results.
+Tekintsd át az eredményeket.
 
-You should now see:
+Most már az alábbiakat kell látnod:
 
 ```text
 DealerName
@@ -434,43 +434,43 @@ PCT
 MPL_Code
 ```
 
-alongside the sales transaction information.
+a sales transaction information mellett.
 
 ---
 
-# Check Record Counts
+# A record countok ellenőrzése
 
-Compare:
+Hasonlítsd össze:
 
 ```sql
 SELECT COUNT(*)
 FROM `<your_name>_stage.sales_stage`;
 ```
 
-and:
+és:
 
 ```sql
 SELECT COUNT(*)
 FROM `<your_name>_stage.sales_enriched`;
 ```
 
-The counts should be identical.
+A countoknak azonosnak kell lenniük.
 
-Why?
+Miért?
 
-Because both joins are:
+Mert mindkét join:
 
 ```sql
 LEFT JOIN
 ```
 
-and should not remove records.
+és nem távolíthat el recordokat.
 
 ---
 
-# Investigate Missing Mappings
+# A hiányzó mappingek vizsgálata
 
-Run:
+Futtasd:
 
 ```sql
 SELECT *
@@ -479,20 +479,20 @@ WHERE Basket IS NULL
 LIMIT 20;
 ```
 
-If rows appear, this means:
+Ha sorok jelennek meg, az azt jelenti:
 
 ```text
-MLI exists in sales
-but not in mapping
+Az MLI létezik a sales adatokban,
+de a mappingben nem.
 ```
 
-This is a common data quality issue in real projects.
+Ez gyakori data quality issue valós projectekben.
 
 ---
 
-# Compare to Alteryx
+# Összehasonlítás az Alteryxszel
 
-The logic we just implemented is equivalent to:
+Az imént implementált logic az alábbival egyenértékű:
 
 ```text
 Input
@@ -504,32 +504,32 @@ Join
 Output
 ```
 
-in an Alteryx workflow.
+egy Alteryx workflow-ban.
 
-The difference is that Dataform stores the transformation as version-controlled SQL.
+A különbség az, hogy a Dataform version-controlled SQL-ként tárolja a transformationt.
 
 ---
 
 # Checkpoint
 
-You should now have:
+Mostanra rendelkezned kell az alábbiakkal:
 
 ✓ sales_enriched
 
-✓ Working Dataform dependencies
+✓ Működő Dataform dependencyk
 
-✓ First use of ref()
+✓ A `ref()` első használata
 
-✓ Verified lineage
+✓ Ellenőrzött lineage
 
-✓ Successful joins
+✓ Sikeres joinok
 
 ✓ Business-enriched dataset
 
 ---
 
-# What Comes Next?
+# Mi következik?
 
-In the next exercise we will build the GOLD layer.
+A következő gyakorlatban felépítjük a GOLD layert.
 
-We will aggregate and summarize the enriched data into a reporting-ready table that could be consumed directly by Power BI, Excel or downstream reporting tools.
+Az enriched adatokat egy reporting-ready table-be aggregáljuk és összegezzük, amelyet közvetlenül használhat a Power BI, az Excel vagy más downstream reporting tool.

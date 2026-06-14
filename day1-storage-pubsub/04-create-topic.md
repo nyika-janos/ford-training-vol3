@@ -1,32 +1,32 @@
-# Day 1 - Exercise 4
+# 1. nap - 4. gyakorlat
 
-# Create a Pub/Sub Topic
+# Pub/Sub topic létrehozása
 
-## Objective
+## Cél
 
-Create a Pub/Sub topic that will receive Cloud Storage events.
-
----
-
-## Estimated Time
-
-10 minutes
+Hozz létre egy Pub/Sub topicot, amely fogadja a Cloud Storage eventeket.
 
 ---
 
-## Background
+## Becsült idő
 
-Pub/Sub is Google's messaging platform.
-
-Today we will use it to receive notifications when files arrive in Cloud Storage.
+10 perc
 
 ---
 
-## Steps
+## Háttér
 
-### Step 1
+A Pub/Sub a Google messaging platformja.
 
-Open:
+Ma arra használjuk, hogy notificationöket fogadjunk, amikor fájlok érkeznek a Cloud Storage-ba.
+
+---
+
+## Lépések
+
+### 1. lépés
+
+Nyisd meg:
 
 ```
 Pub/Sub
@@ -34,9 +34,9 @@ Pub/Sub
 
 ---
 
-### Step 2
+### 2. lépés
 
-Select:
+Válaszd ki:
 
 ```
 Topics
@@ -44,9 +44,9 @@ Topics
 
 ---
 
-### Step 3
+### 3. lépés
 
-Click:
+Kattints erre:
 
 ```
 Create Topic
@@ -54,9 +54,9 @@ Create Topic
 
 ---
 
-### Step 4
+### 4. lépés
 
-Name:
+Név:
 
 ```
 file-arrived-topic-<firstname>
@@ -64,11 +64,11 @@ file-arrived-topic-<firstname>
 
 ---
 
-### Step 5
+### 5. lépés
 
-Accept defaults.
+Fogadd el a default értékeket.
 
-Click:
+Kattints erre:
 
 ```
 Create
@@ -76,14 +76,14 @@ Create
 
 ---
 
-## Validation
+## Ellenőrzés
 
-Verify that the topic exists.
+Ellenőrizd, hogy a topic létezik-e.
 
 ---
 
-## Discussion
+## Megbeszélés
 
-What should happen when a new Excel file arrives?
+Mi történjen, amikor egy új Excel-fájl érkezik?
 
-Tomorrow we will eventually load the file into BigQuery.
+Holnap a fájlt végül betöltjük a BigQuerybe.

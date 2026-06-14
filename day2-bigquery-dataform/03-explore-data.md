@@ -1,24 +1,24 @@
-# 03 - Explore Data
+# 03 - Az adatok feltérképezése
 
-## Data Profiling and Data Quality Checks
+## Data profiling és data quality checkek
 
-### Why is this important?
+### Miért fontos ez?
 
-Before building transformations, we should always understand:
+A transformationök felépítése előtt mindig tisztáznunk kell:
 
-- What is the business key?
-- Is the key unique?
-- Are there NULL values?
-- Can we safely join the tables?
-- Do we have missing reference data?
+- Mi a business key?
+- Egyedi a key?
+- Vannak NULL értékek?
+- Biztonságosan joinolhatók a table-ök?
+- Hiányzik valamilyen reference data?
 
-These checks are commonly performed before creating production pipelines.
+Ezeket a checkeket általában a production pipeline-ok létrehozása előtt végzik el.
 
 ---
 
-# Check the Mapping Table
+# A mapping table ellenőrzése
 
-## Row Count
+## Sorszám
 
 ```sql
 SELECT COUNT(*) AS row_count
@@ -27,7 +27,7 @@ FROM `<your_name>_raw.mli_mapping`;
 
 ---
 
-## Is MLI Unique?
+## Egyedi az MLI?
 
 ```sql
 SELECT
@@ -36,23 +36,23 @@ SELECT
 FROM `<your_name>_raw.mli_mapping`;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 total_rows = distinct_mli
 ```
 
-This suggests that:
+Ez arra utal, hogy az:
 
 ```text
 MLI
 ```
 
-can potentially be used as a business key.
+potenciálisan business keyként használható.
 
 ---
 
-## Find Duplicate MLIs
+## Duplikált MLI-k keresése
 
 ```sql
 SELECT
@@ -63,7 +63,7 @@ GROUP BY MLI
 HAVING COUNT(*) > 1;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 0 rows returned
@@ -71,7 +71,7 @@ HAVING COUNT(*) > 1;
 
 ---
 
-## Check for NULL MLI Values
+## NULL MLI-értékek ellenőrzése
 
 ```sql
 SELECT
@@ -80,7 +80,7 @@ FROM `<your_name>_raw.mli_mapping`
 WHERE MLI IS NULL;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 0
@@ -88,9 +88,9 @@ WHERE MLI IS NULL;
 
 ---
 
-# Check the Dealer Master Table
+# A dealer master table ellenőrzése
 
-## Row Count
+## Sorszám
 
 ```sql
 SELECT COUNT(*) AS row_count
@@ -99,7 +99,7 @@ FROM `<your_name>_raw.dealer_master`;
 
 ---
 
-## Is DealerCode Unique?
+## Egyedi a DealerCode?
 
 ```sql
 SELECT
@@ -108,7 +108,7 @@ SELECT
 FROM `<your_name>_raw.dealer_master`;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 total_rows = distinct_dealers
@@ -116,7 +116,7 @@ total_rows = distinct_dealers
 
 ---
 
-## Find Duplicate Dealer Codes
+## Duplikált DealerCode-ok keresése
 
 ```sql
 SELECT
@@ -127,7 +127,7 @@ GROUP BY DealerCode
 HAVING COUNT(*) > 1;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 0 rows returned
@@ -135,7 +135,7 @@ HAVING COUNT(*) > 1;
 
 ---
 
-## Check for NULL Dealer Codes
+## NULL DealerCode-ok ellenőrzése
 
 ```sql
 SELECT
@@ -144,7 +144,7 @@ FROM `<your_name>_raw.dealer_master`
 WHERE DealerCode IS NULL;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 0
@@ -152,15 +152,15 @@ WHERE DealerCode IS NULL;
 
 ---
 
-# Check the Sales Table
+# A sales table ellenőrzése
 
-Unlike the previous tables, sales_data is a fact table.
+Az előző table-ökkel ellentétben a `sales_data` egy fact table.
 
-We do not expect the key columns to be unique.
+Nem várjuk el, hogy a key columnok egyediek legyenek.
 
 ---
 
-## Row Count
+## Sorszám
 
 ```sql
 SELECT COUNT(*) AS row_count
@@ -169,7 +169,7 @@ FROM `<your_name>_raw.sales_data`;
 
 ---
 
-## Distinct Dealers
+## Különböző dealerek
 
 ```sql
 SELECT
@@ -179,7 +179,7 @@ FROM `<your_name>_raw.sales_data`;
 
 ---
 
-## Distinct Products
+## Különböző productok
 
 ```sql
 SELECT
@@ -189,7 +189,7 @@ FROM `<your_name>_raw.sales_data`;
 
 ---
 
-## Available Markets
+## Elérhető marketek
 
 ```sql
 SELECT
@@ -202,13 +202,13 @@ ORDER BY rows DESC;
 
 ---
 
-# Validate the Future Joins
+# A későbbi joinok validálása
 
-Before joining tables we should verify that the reference data exists.
+A table-ök joinolása előtt ellenőriznünk kell, hogy létezik-e a szükséges reference data.
 
 ---
 
-## Missing Dealers
+## Hiányzó dealerek
 
 ```sql
 SELECT
@@ -219,7 +219,7 @@ LEFT JOIN `<your_name>_raw.dealer_master` d
 WHERE d.DealerCode IS NULL;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 0
@@ -227,7 +227,7 @@ WHERE d.DealerCode IS NULL;
 
 ---
 
-## Missing Product Mappings
+## Hiányzó product mappingek
 
 ```sql
 SELECT
@@ -238,7 +238,7 @@ LEFT JOIN `<your_name>_raw.mli_mapping` m
 WHERE m.MLI IS NULL;
 ```
 
-### Expected Result
+### Várt eredmény
 
 ```text
 0
@@ -246,9 +246,9 @@ WHERE m.MLI IS NULL;
 
 ---
 
-# Mini Data Quality Report
+# Mini data quality report
 
-Run the following query:
+Futtasd az alábbi queryt:
 
 ```sql
 SELECT
@@ -257,7 +257,7 @@ SELECT
     (SELECT COUNT(*) FROM `<your_name>_raw.mli_mapping`) AS mapping_rows;
 ```
 
-### Example Result
+### Példaeredmény
 
 | sales_rows | dealer_rows | mapping_rows |
 |------------|-------------|--------------|
@@ -265,22 +265,22 @@ SELECT
 
 ---
 
-# What did we learn?
+# Mit tanultunk?
 
-Before writing a single Dataform model we already know:
+Már az első Dataform model megírása előtt tudjuk:
 
-✓ Which tables are fact tables
+✓ Mely table-ök fact table-ök
 
-✓ Which tables are lookup tables
+✓ Mely table-ök lookup table-ök
 
-✓ Which columns are business keys
+✓ Mely columnok business key-ek
 
-✓ Which columns will be used for joins
+✓ Mely columnokat használjuk majd a joinokhoz
 
-✓ Whether the keys are unique
+✓ Egyediek-e a key-ek
 
-✓ Whether the reference data is complete
+✓ Teljes-e a reference data
 
-✓ Whether our future joins are safe
+✓ Biztonságosak-e a későbbi joinjaink
 
-This is exactly the type of analysis that should happen before building production transformations.
+Pontosan ilyen elemzést kell végezni a production transformationök felépítése előtt.
