@@ -38,6 +38,10 @@ export/
 
 Most kézzel indítjuk az exportot. A negyedik napon az Airflow gyakorlatban ugyanez az endpoint hívható ütemezetten, vagy egy GOLD frissítés után.
 
+Az exporter futtatása előtt a `sales_gold` table-nek már léteznie kell. A `monthly_sales.xlsx` RAW table-jeinek feldolgozásához ezt a Dataform repositoryt használd:
+
+[nyika-janos/ford-training-vol3-day2-dataform-repo](https://github.com/nyika-janos/ford-training-vol3-day2-dataform-repo)
+
 ---
 
 # 1. Lépjünk a service mappájába

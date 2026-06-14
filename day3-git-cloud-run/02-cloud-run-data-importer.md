@@ -159,11 +159,9 @@ A `file_ingestion_run_log` megmutatja, mi történt egy futás során.
 bq query --use_legacy_sql=false < sql/02_sample_configs.sql
 ```
 
-A sample config 5 szabályt tartalmaz:
+A `monthly_sales.xlsx` feldolgozásához a következő három config szabályt használjuk:
 
 ```text
-sales_data.csv        -> janos_raw.sales
-dealer_master.csv     -> janos_raw.dealer_master
 monthly_sales.xlsx / Sales       -> janos_raw.sales
 monthly_sales.xlsx / Dealers     -> janos_raw.dealer_master
 monthly_sales.xlsx / MLI Mapping -> janos_raw.mli_mapping
@@ -173,7 +171,38 @@ Fontos: ha nem `janos_raw` a saját RAW dataseted, akkor a `02_sample_configs.sq
 
 ---
 
-# 7. Hozzuk létre a Pub/Sub topicot
+# 7. Opcionális: állítsuk vissza a tiszta demo állapotot
+
+Ha a gyakorlatot újra szeretnéd kezdeni, először nyisd meg:
+
+```text
+sql/03_reset_demo_tables.sql
+```
+
+A fájl elején cseréld le a default username értékét:
+
+```sql
+DECLARE username STRING DEFAULT "janos";
+```
+
+Ezután futtasd:
+
+```bash
+bq query --use_legacy_sql=false < sql/03_reset_demo_tables.sql
+```
+
+A script:
+
+- kiüríti az importer run logot,
+- törli az importer által újra létrehozható RAW table-öket,
+- törli a Dataform által újra létrehozható STAGE, INTERMEDIATE és GOLD table-öket,
+- törli a Dataform assertion view-kat.
+
+A `file_ingestion_config` table és a benne lévő szabályok megmaradnak.
+
+---
+
+# 8. Hozzuk létre a Pub/Sub topicot
 
 ```bash
 gcloud pubsub topics create $TOPIC_NAME
@@ -185,7 +214,7 @@ A Cloud Storage notification ide küldi az üzenetet, amikor új fájl érkezik 
 
 ---
 
-# 8. Deployoljuk a Cloud Run service-t
+# 9. Deployoljuk a Cloud Run service-t
 
 ```bash
 gcloud run deploy $SERVICE_NAME \
@@ -206,7 +235,7 @@ Demo célra `--allow-unauthenticated` szerepel. Éles környezetben Pub/Sub OIDC
 
 ---
 
-# 9. Mentsük el a Cloud Run URL-t
+# 10. Mentsük el a Cloud Run URL-t
 
 ```bash
 export SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
@@ -220,7 +249,7 @@ Erre az URL-re fog pusholni a Pub/Sub subscription.
 
 ---
 
-# 10. Hozzuk létre a Pub/Sub push subscriptiont
+# 11. Hozzuk létre a Pub/Sub push subscriptiont
 
 ```bash
 gcloud pubsub subscriptions create $SUBSCRIPTION_NAME \
@@ -237,7 +266,7 @@ A 120 másodperc kényelmesebb a demóhoz.
 
 ---
 
-# 11. Hozzuk létre a bucket folder struktúrát
+# 12. Hozzuk létre a bucket folder struktúrát
 
 ```bash
 touch .keep
@@ -254,7 +283,7 @@ Cloud Storage-ban nincs valódi folder. A Console a fájlnevek prefixei alapján
 
 ---
 
-# 12. Hozzuk létre a Cloud Storage notificationt
+# 13. Hozzuk létre a Cloud Storage notificationt
 
 ```bash
 gsutil notification create \
@@ -270,32 +299,6 @@ Miért fontos a `-p landing/`?
 Így csak a `landing/` alá érkező új objektumokról megy Pub/Sub üzenet.
 
 Ha nincs prefix, akkor a `processed/`, `archive/` és `error/` alatti fájlmozgatások is új üzeneteket generálnának.
-
----
-
-# 13. Teszteljük CSV fájllal
-
-```bash
-gsutil cp samples/sales_data.csv gs://$BUCKET_NAME/landing/sales_data.csv
-```
-
-Várható eredmény:
-
-```text
-janos_raw.sales
-```
-
-Töltsük fel a dealer mastert is:
-
-```bash
-gsutil cp samples/dealer_master.csv gs://$BUCKET_NAME/landing/dealer_master.csv
-```
-
-Várható eredmény:
-
-```text
-janos_raw.dealer_master
-```
 
 ---
 
@@ -323,7 +326,35 @@ janos_raw.mli_mapping
 
 ---
 
-# 15. Nézzük meg a run logot
+# 15. Futtassuk a Dataform transformationöket
+
+A `monthly_sales.xlsx` által létrehozott RAW table-ek feldolgozásához ezt a Dataform repositoryt használd:
+
+[nyika-janos/ford-training-vol3-day2-dataform-repo](https://github.com/nyika-janos/ford-training-vol3-day2-dataform-repo)
+
+A Dataform repositoryban:
+
+1. Állítsd be a saját username-edet a `workflow_settings.yaml` fájlban.
+2. Compile-old a repositoryt.
+3. Futtasd az összes actiont.
+
+A pipeline az alábbi flow-t valósítja meg:
+
+```text
+janos_raw.sales
+janos_raw.dealer_master
+janos_raw.mli_mapping
+        ↓
+Dataform STAGE / INTERMEDIATE
+        ↓
+janos_gold.sales_gold
+```
+
+A `monthly_sales.xlsx` 750 sales sort tartalmaz. A GOLD model `market`, `segment` és `model` szerint aggregál, ezért a várt eredmény 150 sor a `sales_gold` table-ben.
+
+---
+
+# 16. Nézzük meg a run logot
 
 BigQuery-ben:
 
@@ -349,7 +380,7 @@ Itt látszik:
 
 ---
 
-# 16. Nézzük meg a bucket eredményt
+# 17. Nézzük meg a bucket eredményt
 
 ```bash
 gsutil ls gs://$BUCKET_NAME/landing/
@@ -367,7 +398,7 @@ archive/
 
 ---
 
-# 17. Cloud Run logok
+# 18. Cloud Run logok
 
 ```bash
 gcloud run services logs read $SERVICE_NAME \
@@ -384,7 +415,7 @@ Ez akkor hasznos, ha látni szeretnénk:
 
 ---
 
-# 18. Mit tanultunk?
+# 19. Mit tanultunk?
 
 Ebben a gyakorlatban egy klasszikus Alteryx jellegű fájlbetöltést cloud-native módon valósítottunk meg.
 

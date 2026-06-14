@@ -220,8 +220,6 @@ A run log célja, hogy oktatás és hibakeresés közben látható legyen:
 A `samples/` mappa tartalma:
 
 ```text
-sales_data.csv
-dealer_master.csv
 monthly_sales.xlsx
 ```
 
@@ -233,4 +231,44 @@ Dealers
 MLI Mapping
 ```
 
-Ezek a minták elegendők a CSV és Excel alapú betöltés bemutatásához.
+Ez a minta elegendő az Excel-alapú, több RAW table-t létrehozó betöltés bemutatásához.
+
+---
+
+# Demo reset
+
+Tiszta Day 3 demo állapothoz használd:
+
+```text
+sql/03_reset_demo_tables.sql
+```
+
+A futtatás előtt állítsd be a megfelelő username-et a script elején, majd futtasd:
+
+```bash
+bq query --use_legacy_sql=false < sql/03_reset_demo_tables.sql
+```
+
+A script az ingestion config megtartása mellett törli az újragenerálható RAW, STAGE, INTERMEDIATE és GOLD objecteket, valamint kiüríti az importer run logot.
+
+---
+
+# Dataform feldolgozás
+
+A `monthly_sales.xlsx` által létrehozott RAW table-ekhez ezt a Dataform repositoryt használd:
+
+[nyika-janos/ford-training-vol3-day2-dataform-repo](https://github.com/nyika-janos/ford-training-vol3-day2-dataform-repo)
+
+A repository a következő RAW inputokra épül:
+
+```text
+<username>_raw.sales
+<username>_raw.dealer_master
+<username>_raw.mli_mapping
+```
+
+A teljes Dataform pipeline futtatása után létrejön:
+
+```text
+<username>_gold.sales_gold
+```
