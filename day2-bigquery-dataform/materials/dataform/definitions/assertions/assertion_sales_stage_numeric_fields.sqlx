@@ -5,7 +5,7 @@ config {
 SELECT *
 FROM ${ref("sales_stage")}
 WHERE
-    units IS NULL
-    OR revenue IS NULL
-    OR units <= 0
-    OR revenue <= 0
+    Qty IS NULL
+    OR Revenue IS NULL
+    OR Qty <= 0
+    OR Revenue <= 0

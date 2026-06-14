@@ -11,9 +11,8 @@ js {
 }
 
 SELECT DISTINCT
-    TRIM(dealer_code) AS dealer_code,
-    TRIM(dealer_name) AS dealer_name,
-    UPPER(TRIM(market)) AS market,
-    TRIM(city) AS city
+    UPPER(TRIM(Market)) AS Market,
+    TRIM(DealerCode) AS DealerCode,
+    TRIM(DealerName) AS DealerName
 FROM `${raw_dataset}.dealer_master`
-WHERE dealer_code IS NOT NULL
+WHERE DealerCode IS NOT NULL

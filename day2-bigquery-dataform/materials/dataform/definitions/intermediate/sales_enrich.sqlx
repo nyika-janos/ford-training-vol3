@@ -5,21 +5,18 @@ config {
 }
 
 SELECT
-    s.market,
-    s.dealer_code,
-    d.dealer_name,
-    d.city,
-    s.sales_date,
-    DATE_TRUNC(s.sales_date, MONTH) AS sales_month,
-    s.model,
-    m.mli_code,
-    m.segment,
-    s.units,
-    s.revenue,
-    SAFE_DIVIDE(s.revenue, s.units) AS average_unit_revenue
+    s.Market,
+    s.DealerCode,
+    d.DealerName,
+    s.MLI,
+    m.Basket,
+    m.PCT,
+    m.MPL_Code,
+    s.Month,
+    s.Qty,
+    s.Revenue
 FROM ${ref("sales_stage")} s
 LEFT JOIN ${ref("dealer_stage")} d
-    ON s.dealer_code = d.dealer_code
-    AND s.market = d.market
+    ON s.DealerCode = d.DealerCode
 LEFT JOIN ${ref("mapping_stage")} m
-    ON s.model = m.model
+    ON s.MLI = m.MLI

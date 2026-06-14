@@ -5,7 +5,7 @@ config {
 SELECT *
 FROM ${ref("sales_stage")}
 WHERE
-    market IS NULL
-    OR dealer_code IS NULL
-    OR sales_date IS NULL
-    OR model IS NULL
+    Market IS NULL
+    OR DealerCode IS NULL
+    OR MLI IS NULL
+    OR Month IS NULL

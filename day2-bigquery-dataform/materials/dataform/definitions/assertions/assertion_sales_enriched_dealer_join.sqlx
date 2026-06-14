@@ -4,4 +4,4 @@ config {
 
 SELECT *
 FROM ${ref("sales_enriched")}
-WHERE dealer_name IS NULL
+WHERE DealerName IS NULL

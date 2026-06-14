@@ -3,13 +3,11 @@ config {
 }
 
 SELECT
-    market,
-    segment,
-    model,
+    Market,
+    Basket,
     COUNT(*) AS cnt
 FROM ${ref("sales_gold")}
 GROUP BY
-    market,
-    segment,
-    model
+    Market,
+    Basket
 HAVING COUNT(*) > 1

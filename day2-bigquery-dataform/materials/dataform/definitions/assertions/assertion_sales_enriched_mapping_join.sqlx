@@ -4,4 +4,4 @@ config {
 
 SELECT *
 FROM ${ref("sales_enriched")}
-WHERE segment IS NULL
+WHERE Basket IS NULL

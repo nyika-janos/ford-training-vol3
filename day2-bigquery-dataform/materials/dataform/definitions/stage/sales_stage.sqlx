@@ -11,11 +11,11 @@ js {
 }
 
 SELECT DISTINCT
-    UPPER(TRIM(market)) AS market,
-    TRIM(dealer_code) AS dealer_code,
-    SAFE_CAST(sales_date AS DATE) AS sales_date,
-    TRIM(model) AS model,
-    SAFE_CAST(units AS INT64) AS units,
-    SAFE_CAST(revenue AS NUMERIC) AS revenue
-FROM `${raw_dataset}.sales`
-WHERE dealer_code IS NOT NULL
+    UPPER(TRIM(Market)) AS Market,
+    TRIM(DealerCode) AS DealerCode,
+    CAST(MLI AS STRING) AS MLI,
+    SAFE_CAST(Month AS INT64) AS Month,
+    SAFE_CAST(Qty AS INT64) AS Qty,
+    SAFE_CAST(Revenue AS NUMERIC) AS Revenue
+FROM `${raw_dataset}.sales_data`
+WHERE DealerCode IS NOT NULL

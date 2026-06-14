@@ -11,8 +11,9 @@ js {
 }
 
 SELECT DISTINCT
-    TRIM(model) AS model,
-    TRIM(mli_code) AS mli_code,
-    TRIM(segment) AS segment
+    CAST(MLI AS STRING) AS MLI,
+    TRIM(Basket) AS Basket,
+    TRIM(PCT) AS PCT,
+    TRIM(MPL_Code) AS MPL_Code
 FROM `${raw_dataset}.mli_mapping`
-WHERE model IS NOT NULL
+WHERE MLI IS NOT NULL
