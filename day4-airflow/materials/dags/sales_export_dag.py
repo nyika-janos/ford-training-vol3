@@ -18,7 +18,11 @@ except ImportError:
 
 
 def airflow_var(name: str, default: str | None = None, required: bool = True) -> str:
-    value = Variable.get(name, default_var=default)
+    try:
+        value = Variable.get(name, default=default)
+    except TypeError:
+        value = Variable.get(name, default_var=default)
+
     if required and not value:
         raise AirflowException(f"Missing required Airflow Variable: {name}")
     return value
