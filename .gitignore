@@ -1,0 +1,8 @@
+# Local Airflow credentials and runtime files
+day4-airflow/local-airflow/
+day4-airflow/**/application_default_credentials.json
+day4-airflow/**/gcp-key.json
+
+# Python cache files
+__pycache__/
+*.py[cod]
