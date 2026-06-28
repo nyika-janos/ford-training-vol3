@@ -69,6 +69,26 @@ Mit mutat meg?
 
 Ez jó első GCP-s Airflow demo, mert a Dataform repository adatok nélkül is működik, ha a `sales_gold` tábla már létezik.
 
+Taskok szerepe:
+
+| Task | Mit csinál? | Miért jó tréningpélda? |
+|---|---|---|
+| `check_sales_gold` | BigQuery queryvel megszámolja a GOLD tábla sorait. Ha a tábla üres, hibára fut. | Megmutatja, hogy Airflow taskkal egyszerű data quality gate-et lehet építeni. |
+| `trigger_cloud_run_exporter` | HTTP POST kéréssel meghívja a 3. napon deployolt Cloud Run exportert. | Megmutatja, hogyan indít Airflow külső service-t, miközben maga nem exportál Excel fájlt. |
+| `verify_export_file` | A Cloud Run válaszában kapott `gs://...` útvonal alapján ellenőrzi, hogy az export fájl tényleg létrejött és nem üres. | Megmutatja, hogyan lehet downstream ellenőrzést tenni egy service hívás után. |
+
+Ez a DAG szándékosan kicsi. A résztvevők jól látják benne az Airflow alapmintát:
+
+```text
+ellenőrzés
+  ↓
+külső komponens indítása
+  ↓
+eredmény ellenőrzése
+```
+
+Ez a legtöbb orchestration workflow alaplogikája.
+
 ### 2. `sales_dataform_export_dag`
 
 Ez a nagyobb pipeline DAG.
@@ -104,6 +124,41 @@ Mit mutat meg?
 - end-to-end orchestration
 
 Fontos: az importer továbbra is event-driven módon működik. Ha új fájlt töltünk a bucket `landing/` folderébe, akkor a Pub/Sub indítja a Cloud Run importert. Az Airflow ebben a gyakorlatban a transformation és export szakaszt koordinálja.
+
+Taskok szerepe:
+
+| Task | Mit csinál? | Miért jó tréningpélda? |
+|---|---|---|
+| `create_dataform_compilation_result` | Dataform API-n keresztül compile-olja a Dataform projektet. Workspace vagy Git branch alapján készít compilation resultot. | Megmutatja, hogy a Dataform futtatás előtt először le kell fordítani a SQLX projektet végrehajtható tervvé. |
+| `create_dataform_workflow_invocation` | A compilation resultból Dataform workflow invocationt indít. Itt adjuk meg a custom futtató service accountot is. | Megmutatja, hogyan indít Airflow GCP-native transformation pipeline-t anélkül, hogy SQL-t futtatna saját maga. |
+| `wait_for_dataform_workflow_invocation` | Pollolja a Dataform workflow állapotát, amíg `SUCCEEDED`, `FAILED` vagy `CANCELLED` nem lesz. | Megmutatja a hosszabb külső futások Airflowból történő várakoztatását és hibakezelését. |
+| `check_sales_gold` | Ellenőrzi, hogy a Dataform futás után a GOLD tábla tartalmaz adatot. | Megmutatja, hogy transformation után érdemes ellenőrzési kaput tenni. |
+| `trigger_cloud_run_exporter` | Sikeres Dataform után meghívja a Cloud Run exportert. | Megmutatja a komponensek közötti függőséget: export csak friss GOLD réteg után indul. |
+| `verify_export_file` | Ellenőrzi a Cloud Storage-ba írt Excel exportot. | Megmutatja az end-to-end pipeline végállapotának ellenőrzését. |
+
+Ez a DAG már közelebb áll egy valós pipeline-hoz:
+
+```text
+transformation terv létrehozása
+  ↓
+transformation futtatása
+  ↓
+futás megvárása
+  ↓
+eredmény ellenőrzése
+  ↓
+export indítása
+  ↓
+export ellenőrzése
+```
+
+A fontos tanulság: az Airflow nem veszi át sem a Dataform, sem a Cloud Run szerepét. Airflow koordinál:
+
+- mikor mi induljon,
+- mire kell várni,
+- hol álljon meg hiba esetén,
+- mit lehet újrafuttatni,
+- hol nézzük meg a logokat.
 
 ---
 
@@ -444,6 +499,13 @@ Sikeres futás esetén:
 - az Airflow ellenőrzi, hogy a fájl létezik és nem üres,
 - az export fájl megjelenik a bucket `export/` folderében.
 
+A UI-ban érdemes megmutatni:
+
+- a Graph nézetben hogyan követik egymást a taskok,
+- a `trigger_cloud_run_exporter` task XCom értékében hogyan jelenik meg az exporter JSON válasza,
+- a `verify_export_file` task logjában hogyan látszik az ellenőrzött Cloud Storage objektum,
+- mi történik, ha egy upstream task hibázik: a downstream taskok nem indulnak el.
+
 ---
 
 ## 8. Második futtatás: `sales_dataform_export_dag`
@@ -484,6 +546,13 @@ Ez egy jó pont arra, hogy a Graph nézetben megmutassuk:
 - hol történt hiba,
 - mit jelent a retry,
 - hogyan lehet újrafuttatni csak egy taskot.
+
+Ebben a DAG-ban különösen hasznos megfigyelni:
+
+- a Dataform futás Airflowban egyetlen taskként látszik, de Dataformon belül több SQLX action futhat,
+- a `wait_for_dataform_workflow_invocation` task nem dolgozza fel az adatot, csak vár és állapotot ellenőriz,
+- a Cloud Run exporter csak akkor indul, ha a Dataform futás sikeres,
+- a pipeline végén nem csak azt hisszük, hogy készült export, hanem ellenőrizzük is a fájlt Cloud Storage-ban.
 
 ---
 
