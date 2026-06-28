@@ -23,6 +23,9 @@ def airflow_var(name: str, default: str | None = None, required: bool = True) ->
     except TypeError:
         value = Variable.get(name, default_var=default)
 
+    if isinstance(value, str):
+        value = value.strip()
+
     if required and not value:
         raise AirflowException(f"Missing required Airflow Variable: {name}")
     return value

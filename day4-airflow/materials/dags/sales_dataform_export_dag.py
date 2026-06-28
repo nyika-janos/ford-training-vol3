@@ -18,8 +18,8 @@ except ImportError:
     from airflow.operators.python import PythonOperator
 
 
-DATAFORM_TERMINAL_STATES = {"SUCCEEDED", "FAILED", "CANCELLED"}
 DATAFORM_API_ROOT = "https://dataform.googleapis.com/v1beta1"
+DATAFORM_TERMINAL_STATES = {"SUCCEEDED", "FAILED", "CANCELLED"}
 
 
 def airflow_var(name: str, default: str | None = None, required: bool = True) -> str:
@@ -27,6 +27,9 @@ def airflow_var(name: str, default: str | None = None, required: bool = True) ->
         value = Variable.get(name, default=default)
     except TypeError:
         value = Variable.get(name, default_var=default)
+
+    if isinstance(value, str):
+        value = value.strip()
 
     if required and not value:
         raise AirflowException(f"Missing required Airflow Variable: {name}")
@@ -40,10 +43,6 @@ def dataform_repository_path() -> str:
     return f"projects/{project_id}/locations/{location}/repositories/{repository}"
 
 
-def dataform_base_url() -> str:
-    return f"{DATAFORM_API_ROOT}/{dataform_repository_path()}"
-
-
 def authorized_session():
     import google.auth
     from google.auth.transport.requests import AuthorizedSession
@@ -54,9 +53,22 @@ def authorized_session():
     return AuthorizedSession(credentials)
 
 
+def validate_dataform_service_account() -> str:
+    service_account = airflow_var("dataform_service_account")
+    if service_account.endswith("@gcp-sa-dataform.iam.gserviceaccount.com"):
+        raise AirflowException(
+            "The default Dataform service agent cannot be used to run workflows "
+            "in strict act-as mode. Set dataform_service_account to a custom "
+            "service account, for example "
+            "dataform-runner@<PROJECT_ID>.iam.gserviceaccount.com."
+        )
+
+    return service_account
+
+
 def create_dataform_compilation_result(**context):
     session = authorized_session()
-    base_url = dataform_base_url()
+    repository_path = dataform_repository_path()
     git_commitish = airflow_var("dataform_git_commitish", "main", required=False)
     workspace = airflow_var("dataform_workspace", "", required=False)
 
@@ -65,9 +77,13 @@ def create_dataform_compilation_result(**context):
         if workspace.startswith("projects/"):
             payload = {"workspace": workspace}
         else:
-            payload = {"workspace": f"{dataform_repository_path()}/workspaces/{workspace}"}
+            payload = {"workspace": f"{repository_path}/workspaces/{workspace}"}
 
-    response = session.post(f"{base_url}/compilationResults", json=payload, timeout=120)
+    response = session.post(
+        f"{DATAFORM_API_ROOT}/{repository_path}/compilationResults",
+        json=payload,
+        timeout=120,
+    )
     if response.status_code >= 400:
         raise AirflowException(
             f"Dataform compilation result creation failed: "
@@ -83,21 +99,28 @@ def create_dataform_compilation_result(**context):
 
 def create_dataform_workflow_invocation(**context):
     session = authorized_session()
-    base_url = dataform_base_url()
+    repository_path = dataform_repository_path()
     compilation_result = context["ti"].xcom_pull(
         task_ids="create_dataform_compilation_result"
     )
+    service_account = validate_dataform_service_account()
 
     payload = {
         "compilationResult": compilation_result["name"],
-    }
-    service_account = airflow_var("dataform_service_account", "", required=False)
-    if service_account:
-        payload["invocationConfig"] = {
+        "invocationConfig": {
             "serviceAccount": service_account,
-        }
+        },
+    }
 
-    response = session.post(f"{base_url}/workflowInvocations", json=payload, timeout=120)
+    print(
+        "Creating Dataform workflow invocation with custom service account: "
+        f"{service_account}"
+    )
+    response = session.post(
+        f"{DATAFORM_API_ROOT}/{repository_path}/workflowInvocations",
+        json=payload,
+        timeout=120,
+    )
     if response.status_code >= 400:
         raise AirflowException(
             f"Dataform workflow invocation creation failed: "

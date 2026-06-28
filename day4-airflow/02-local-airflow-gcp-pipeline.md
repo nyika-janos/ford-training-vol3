@@ -296,9 +296,9 @@ Ezek csak a `sales_dataform_export_dag` futtatásához kellenek.
 |---|---|---|
 | `dataform_location` | `europe-west4` | Dataform repository régió |
 | `dataform_repository` | `janos_training_dataform` | saját repository |
-| `dataform_workspace` | `development` | ha remote Git nélküli workspace-ből futtatunk |
-| `dataform_service_account` | `service-123456789@gcp-sa-dataform.iam.gserviceaccount.com` | Dataform futtató service account, strict act-as check esetén kötelező |
-| `dataform_git_commitish` | `main` | akkor hasznos, ha Git branchből compile-olunk |
+| `dataform_service_account` | `dataform-runner@ford-training-430008.iam.gserviceaccount.com` | custom futtató service account |
+| `dataform_git_commitish` | `main` | Git branch / commit / tag, amit compile-olunk |
+| `dataform_workspace` | `development` | opcionális; ha be van állítva, workspace-ből compile-olunk |
 | `dataform_wait_timeout_seconds` | `900` | maximum várakozás |
 | `dataform_poll_seconds` | `15` | poll gyakoriság |
 
@@ -314,9 +314,89 @@ Példa:
 janos_training_dataform
 ```
 
-Ha a repository `Create without a remote repository` módban készült, akkor a `dataform_workspace=development` változó fontos, mert nem Git branchből, hanem workspace-ből compile-olunk.
+Ha `dataform_workspace` be van állítva, akkor a DAG workspace-ből compile-ol. Ez hasznos akkor, ha a Dataform UI-ban korábban a `development` workspace compile/run már működött.
+
+Ha `dataform_workspace` nincs beállítva, akkor a DAG a `dataform_git_commitish` érték alapján, például a GitHub `main` branchből compile-ol.
+
+Ha Git branchből compile-oláskor a Dataform API ezt a hibát adja:
+
+```text
+Can't find package.json
+```
+
+akkor a Dataform nem ugyanazt a projektgyökeret látja, mint amit a UI-ban használtál. Ilyenkor a tréningen egyszerűbb visszaállni workspace compile-ra:
+
+```text
+dataform_workspace = development
+```
 
 ### Dataform service account megjegyzés
+
+Strict act-as módban a Dataform nem futhat a default Dataform service agenttel.
+
+Ez nem használható workflow futtató service accountként:
+
+```text
+service-<PROJECT_NUMBER>@gcp-sa-dataform.iam.gserviceaccount.com
+```
+
+Ez a Dataform service agent. A Google dokumentáció szerint strict act-as módban workflow futtatáshoz custom service accountot vagy user credentialt kell használni.
+
+Ebben a tréningben használjunk custom service accountot:
+
+```text
+dataform-runner@ford-training-430008.iam.gserviceaccount.com
+```
+
+Ezt add meg Airflow Variable-ként:
+
+```text
+dataform_service_account
+```
+
+Ha még nincs ilyen service account, létrehozható:
+
+```bash
+gcloud iam service-accounts create dataform-runner \
+  --display-name="Dataform Runner"
+```
+
+Példa jogosultságok:
+
+```bash
+gcloud projects add-iam-policy-binding ford-training-430008 \
+  --member="serviceAccount:dataform-runner@ford-training-430008.iam.gserviceaccount.com" \
+  --role="roles/bigquery.dataEditor"
+
+gcloud projects add-iam-policy-binding ford-training-430008 \
+  --member="serviceAccount:dataform-runner@ford-training-430008.iam.gserviceaccount.com" \
+  --role="roles/bigquery.jobUser"
+```
+
+Annak az identitynek, amellyel a lokális Airflow autentikál a GCP felé, jogosultnak kell lennie a repositoryt olvasni és workflow invocationt létrehozni. Ha custom service accountot használsz, akkor a Dataform default service agentnek is tudnia kell azt használni.
+
+Példa Dataform service agent jogosítására:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding \
+  dataform-runner@ford-training-430008.iam.gserviceaccount.com \
+  --member="serviceAccount:service-227551883136@gcp-sa-dataform.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+
+gcloud iam service-accounts add-iam-policy-binding \
+  dataform-runner@ford-training-430008.iam.gserviceaccount.com \
+  --member="serviceAccount:service-227551883136@gcp-sa-dataform.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountTokenCreator"
+```
+
+Példa saját felhasználóra:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding \
+  dataform-runner@ford-training-430008.iam.gserviceaccount.com \
+  --member="user:<your_google_account_email>" \
+  --role="roles/iam.serviceAccountUser"
+```
 
 Ha a `create_dataform_workflow_invocation` task ezt a hibát adja:
 
@@ -324,28 +404,7 @@ Ha a `create_dataform_workflow_invocation` task ezt a hibát adja:
 Service account must be set when strict act as checks are enabled.
 ```
 
-akkor a Dataform workflow invocation requestben explicit meg kell adni a futtató service accountot.
-
-Ehhez állítsd be az Airflow UI-ban:
-
-```text
-dataform_service_account
-```
-
-A default Dataform service account általában ilyen formájú:
-
-```text
-service-<PROJECT_NUMBER>@gcp-sa-dataform.iam.gserviceaccount.com
-```
-
-A project number lekérdezhető:
-
-```bash
-gcloud projects describe ford-training-430008 \
-  --format='value(projectNumber)'
-```
-
-Fontos: annak az identitynek, amellyel a lokális Airflow autentikál a GCP felé, jogosultnak kell lennie ezt a service accountot használni. Ehhez jellemzően `Service Account User` / `iam.serviceAccounts.actAs` jogosultság kell az adott service accountra.
+akkor ellenőrizd, hogy a `dataform_service_account` változó nem a default Dataform service agentre mutat-e, hanem custom service accountra.
 
 ---
 
