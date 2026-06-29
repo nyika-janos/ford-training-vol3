@@ -323,6 +323,55 @@ Admin / Variables
 
 Hozd létre az alábbi változókat.
 
+Ha nem szeretnéd kézzel felvenni őket, használd az előkészített import fájlt:
+
+```text
+day4-airflow/materials/airflow_variables/day4_airflow_variables.json
+```
+
+Másold be a lokális Airflow projektbe:
+
+```bash
+cp ~/ford-training-vol3/day4-airflow/materials/airflow_variables/day4_airflow_variables.json \
+  ~/gcp-training-airflow/config/day4_airflow_variables.json
+```
+
+Import CLI-ból:
+
+```bash
+docker compose exec airflow-apiserver airflow variables import \
+  /opt/airflow/config/day4_airflow_variables.json
+```
+
+Ha a compose setupodban nincs `airflow-apiserver` service, próbáld a webserverrel:
+
+```bash
+docker compose exec airflow-webserver airflow variables import \
+  /opt/airflow/config/day4_airflow_variables.json
+```
+
+Import után az alábbi értéket mindenképp ellenőrizd vagy cseréld:
+
+```text
+cloud_run_exporter_url
+```
+
+Az import fájlban ez szándékosan placeholder:
+
+```text
+REPLACE_WITH_DATA_EXPORTER_URL
+```
+
+Ezt átírhatod import előtt a JSON fájlban, vagy import után az Airflow UI-ban.
+
+Az exporter URL-t így tudod lekérdezni Cloud Shellben vagy olyan gépen, ahol van `gcloud`:
+
+```bash
+gcloud run services describe data-exporter \
+  --region europe-west4 \
+  --format='value(status.url)'
+```
+
 ### Közös változók
 
 | Key | Példa value | Megjegyzés |
@@ -334,14 +383,6 @@ Hozd létre az alábbi változókat.
 | `export_prefix` | `export/` | Cloud Storage export folder |
 | `cloud_run_exporter_url` | `https://data-exporter-...run.app` | 3. napi exporter URL |
 | `cloud_run_exporter_authenticated` | `false` | demo módban false |
-
-Az exporter URL-t így tudod lekérdezni Cloud Shellben vagy olyan gépen, ahol van `gcloud`:
-
-```bash
-gcloud run services describe data-exporter \
-  --region europe-west4 \
-  --format='value(status.url)'
-```
 
 ### Dataform változók
 

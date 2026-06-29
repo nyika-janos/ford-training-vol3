@@ -1,0 +1,16 @@
+{
+  "project_id": "ford-training-430008",
+  "bucket_name": "training-jani",
+  "gold_dataset": "janos_gold",
+  "gold_table": "sales_gold",
+  "export_prefix": "export/",
+  "cloud_run_exporter_url": "https://data-exporter-227551883136.europe-west4.run.app",
+  "cloud_run_exporter_authenticated": "false",
+  "dataform_location": "europe-west4",
+  "dataform_repository": "janos_training_dataform",
+  "dataform_service_account": "dataform-runner@ford-training-430008.iam.gserviceaccount.com",
+  "dataform_git_commitish": "main",
+  "dataform_workspace": "development",
+  "dataform_wait_timeout_seconds": "900",
+  "dataform_poll_seconds": "15"
+}
