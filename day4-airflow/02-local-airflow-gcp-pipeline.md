@@ -285,7 +285,64 @@ trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS
 
 Branchingnél ugyanis normális, hogy az egyik ág `skipped`. A join tasknak ezért nem azt kell várnia, hogy minden upstream task sikeres legyen, hanem azt, hogy legalább egy kiválasztott ág sikeresen lefusson, és ne legyen hiba.
 
-### 5. `pipeline_with_notifications_dag`
+### 5. `branching_pipeline_mode_dag`
+
+Ez a DAG azt mutatja meg, hogy a DAG triggerelésekor megadott paraméter alapján is lehet elágazni.
+
+Flow:
+
+```text
+choose_pipeline_mode
+   /                                      \
+  v                                        v
+quick_check_sales_gold                  create_dataform_compilation_result
+  |                                        |
+  v                                        v
+quick_export_all_markets                create_dataform_workflow_invocation
+  |                                        |
+  v                                        v
+quick_verify_export_file                wait_for_dataform_workflow_invocation
+  |                                        |
+  v                                        v
+quick_pipeline_done                     full_check_sales_gold
+                                           |
+                                           v
+                                        full_export_all_markets
+                                           |
+                                           v
+                                        full_verify_export_file
+                                           |
+                                           v
+                                        full_pipeline_done
+```
+
+Ebben a DAG-ban nincs közös visszazáró pont. A döntés után az egyik ág végigmegy, a másik ág pedig `skipped` marad.
+
+Taskok szerepe:
+
+| Task | Mit csinál? | Miért jó tréningpélda? |
+|---|---|---|
+| `choose_pipeline_mode` | `BranchPythonOperator`: a trigger paraméterként kapott `pipeline_mode` alapján választ. | Megmutatja, hogy nem csak adatállapotból, hanem futtatási paraméterből is lehet ágat választani. |
+| `quick_check_sales_gold` / `quick_export_all_markets` / `quick_verify_export_file` | A meglévő GOLD táblát ellenőrzi és exportálja. | Ez a gyors út: nem frissítjük a transformation réteget. |
+| `create_dataform_compilation_result` → `wait_for_dataform_workflow_invocation` | Lefuttatja a Dataform transformation részt. | Ez a teljes út: export előtt frissítjük a GOLD réteget. |
+| `full_check_sales_gold` / `full_export_all_markets` / `full_verify_export_file` | A Dataform után ellenőrzi és exportálja a GOLD táblát. | Megmutatja, hogy a hosszabb ág teljesen önálló pipeline lehet. |
+| `quick_pipeline_done` / `full_pipeline_done` | Az adott ág saját lezáró taskja. | Megmutatja, hogy branching után nem kötelező közös végpontot használni. |
+
+A `pipeline_mode` nem Airflow Variable, hanem DAG trigger paraméter. A Trigger DAG formban választható értékei:
+
+```text
+quick
+full
+```
+
+Ez azért jó tréningpélda, mert egy nagyon valós döntést modellez:
+
+```text
+quick → csak exportáld, ami már a GOLD táblában van
+full  → előbb futtasd a Dataformot, aztán exportálj
+```
+
+### 6. `pipeline_with_notifications_dag`
 
 Ez a DAG a sikeres és sikertelen lezárási ágakat mutatja meg.
 
@@ -330,7 +387,7 @@ Taskok szerepe:
 
 Ez jó tréningpélda arra, hogy egy pipeline-nak nem csak üzleti lépései vannak, hanem operációs lezárása is: siker esetén összegzés, hiba esetén diagnosztikai üzenet.
 
-### 6. `bigquery_operator_showcase_dag`
+### 7. `bigquery_operator_showcase_dag`
 
 Ez egy opcionális, kicsi DAG, amely azt mutatja meg, hogyan néz ki egy natív Airflow provider operator használata.
 

@@ -15,6 +15,7 @@ day4-airflow/materials/dags/sales_export_dag.py
 day4-airflow/materials/dags/sales_dataform_export_dag.py
 day4-airflow/materials/dags/parallel_market_exports_dag.py
 day4-airflow/materials/dags/branching_market_export_dag.py
+day4-airflow/materials/dags/branching_pipeline_mode_dag.py
 day4-airflow/materials/dags/pipeline_with_notifications_dag.py
 day4-airflow/materials/dags/bigquery_operator_showcase_dag.py
 ```
@@ -28,6 +29,7 @@ cp ~/ford-training-vol3/day4-airflow/materials/dags/sales_export_dag.py ~/gcp-tr
 cp ~/ford-training-vol3/day4-airflow/materials/dags/sales_dataform_export_dag.py ~/gcp-training-airflow/dags/
 cp ~/ford-training-vol3/day4-airflow/materials/dags/parallel_market_exports_dag.py ~/gcp-training-airflow/dags/
 cp ~/ford-training-vol3/day4-airflow/materials/dags/branching_market_export_dag.py ~/gcp-training-airflow/dags/
+cp ~/ford-training-vol3/day4-airflow/materials/dags/branching_pipeline_mode_dag.py ~/gcp-training-airflow/dags/
 cp ~/ford-training-vol3/day4-airflow/materials/dags/pipeline_with_notifications_dag.py ~/gcp-training-airflow/dags/
 cp ~/ford-training-vol3/day4-airflow/materials/dags/bigquery_operator_showcase_dag.py ~/gcp-training-airflow/dags/
 ```
@@ -39,6 +41,7 @@ copy .\day4-airflow\materials\dags\sales_export_dag.py $HOME\gcp-training-airflo
 copy .\day4-airflow\materials\dags\sales_dataform_export_dag.py $HOME\gcp-training-airflow\dags\
 copy .\day4-airflow\materials\dags\parallel_market_exports_dag.py $HOME\gcp-training-airflow\dags\
 copy .\day4-airflow\materials\dags\branching_market_export_dag.py $HOME\gcp-training-airflow\dags\
+copy .\day4-airflow\materials\dags\branching_pipeline_mode_dag.py $HOME\gcp-training-airflow\dags\
 copy .\day4-airflow\materials\dags\pipeline_with_notifications_dag.py $HOME\gcp-training-airflow\dags\
 copy .\day4-airflow\materials\dags\bigquery_operator_showcase_dag.py $HOME\gcp-training-airflow\dags\
 ```
@@ -619,7 +622,57 @@ Taskok szerepe:
 
 Így nagy eséllyel egyszer a marketenkénti ág, egyszer pedig az egyben exportáló ág fut. A Graph nézetben jól látszik, hogy a nem választott ágak `skipped` állapotba kerülnek.
 
-### Ötödik futtatás: `pipeline_with_notifications_dag`
+### Ötödik futtatás: `branching_pipeline_mode_dag`
+
+Ez a DAG azt mutatja meg, hogy trigger paraméter alapján is lehet két teljesen külön útvonal között választani.
+
+Várt logika:
+
+```text
+pipeline_mode = quick
+  ↓
+quick_check_sales_gold
+  ↓
+quick_export_all_markets
+  ↓
+quick_verify_export_file
+  ↓
+quick_pipeline_done
+
+pipeline_mode = full
+  ↓
+create_dataform_compilation_result
+  ↓
+create_dataform_workflow_invocation
+  ↓
+wait_for_dataform_workflow_invocation
+  ↓
+full_check_sales_gold
+  ↓
+full_export_all_markets
+  ↓
+full_verify_export_file
+  ↓
+full_pipeline_done
+```
+
+Itt nincs közös join task. A nem választott ág `skipped` marad, a választott ág pedig a saját lezáró taskjáig fut.
+
+Triggereléskor az Airflow UI-ban a `pipeline_mode` paramétert kell kiválasztani:
+
+```text
+quick
+full
+```
+
+Élő demóhoz érdemes kétszer futtatni:
+
+1. `pipeline_mode = quick`
+2. `pipeline_mode = full`
+
+Így jól látszik, hogy ugyanaz a DAG más trigger paraméterrel teljesen más útvonalat jár be.
+
+### Hatodik futtatás: `pipeline_with_notifications_dag`
 
 Ez a DAG a success / failure notification mintát mutatja meg.
 
@@ -673,7 +726,7 @@ Most a notification csak Airflow logba ír. Ez szándékos, mert nem akarunk Sla
 - Pub/Sub üzenetre,
 - incident management rendszerre.
 
-### Hatodik futtatás: `bigquery_operator_showcase_dag`
+### Hetedik futtatás: `bigquery_operator_showcase_dag`
 
 Ez az opcionális DAG azt mutatja meg, hogyan néz ki egy natív Google provider operator használata.
 
