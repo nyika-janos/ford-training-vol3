@@ -13,5 +13,7 @@
   "dataform_workspace": "development",
   "dataform_wait_timeout_seconds": "900",
   "dataform_poll_seconds": "15",
-  "demo_task_delay_seconds": "3"
+  "demo_task_delay_seconds": "3",
+  "gcp_conn_id": "google_cloud_default",
+  "bigquery_location": "europe-west4"
 }

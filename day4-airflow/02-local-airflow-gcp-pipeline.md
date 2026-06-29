@@ -39,7 +39,18 @@ Ezért a DAG-ok előtt be kell állítani:
 
 ## Javasolt DAG stratégia
 
-Két DAG-ot készítünk.
+Több DAG-ot készítünk, de nem mindegyik ugyanazt tanítja.
+
+Az első DAG-ok szándékosan sok `PythonOperator` taskot használnak. Ennek oka, hogy lokális Airflowból, minimális extra provider setup mellett akartunk GCP API-kat és Cloud Run HTTP endpointokat hívni.
+
+Production Airflow vagy Cloud Composer környezetben viszont gyakran használnánk provider operatorokat is, például:
+
+- BigQuery operatorokat,
+- Dataform operatorokat,
+- Cloud Run operatorokat,
+- sensorokat.
+
+Ezért külön van egy kicsi operator showcase DAG is, ahol BigQuery operátort használunk.
 
 ### 1. `sales_export_dag`
 
@@ -160,6 +171,62 @@ A fontos tanulság: az Airflow nem veszi át sem a Dataform, sem a Cloud Run sze
 - mit lehet újrafuttatni,
 - hol nézzük meg a logokat.
 
+### 3. `bigquery_operator_showcase_dag`
+
+Ez egy opcionális, kicsi DAG, amely azt mutatja meg, hogyan néz ki egy natív Airflow provider operator használata.
+
+Flow:
+
+```text
+start
+  ↓
+check_sales_gold_with_bigquery_operator
+  ↓
+visual_pause
+  ↓
+operator_summary
+```
+
+Taskok szerepe:
+
+| Task | Mit csinál? | Miért jó tréningpélda? |
+|---|---|---|
+| `start` | `EmptyOperator`, csak vizuális kezdőpont. | Megmutatja, hogy nem minden tasknak kell tényleges munkát végeznie. |
+| `check_sales_gold_with_bigquery_operator` | `BigQueryCheckOperator` segítségével ellenőrzi, hogy a GOLD tábla nem üres. | Megmutatja, hogy BigQuery ellenőrzéshez nem kell saját Python client kódot írni. |
+| `visual_pause` | `BashOperator` segítségével rövid várakozást tesz a DAG-ba. | Megmutatja egy standard, nem Python alapú operátor használatát. |
+| `operator_summary` | Rövid összefoglalót ír a logba. | Itt a PythonOperator már csak emberi olvashatóságot ad, nem a BigQuery munkát végzi. |
+
+Ez a DAG jó válasz arra a kérdésre, hogy:
+
+```text
+Airflowban mindent PythonOperatorral kell csinálni?
+```
+
+Nem. A PythonOperator rugalmas, de ha van jól illeszkedő provider operator, akkor az sokszor tisztább.
+
+Megjegyzés: ebben a DAG-ban a BigQuery operator `location`, `gcp_conn_id` és tábla paramétereit Pythonból olvassuk ki Airflow Variable-ből. Ennek oka, hogy nem minden provider operator minden paramétere Jinja-template mező. Ha egy nem template-elt mezőbe `{{ var.value... }}` kerül, akkor az szó szerint jut el a GCP API-ig.
+
+### Miért nem Dataform operátorral kezdtünk?
+
+Airflow Google providerben léteznek Dataform operatorok is. A tréning közben viszont több környezeti részletet kellett kézben tartani:
+
+- lokális Airflow konténer,
+- Application Default Credentials,
+- strict act-as mode,
+- custom Dataform service account,
+- workspace-alapú compile,
+- Airflow 3 kompatibilitás.
+
+Ezért a Dataform DAG-ban direkt API-hívásos mintát használunk. Így pontosan látszik, mi történik:
+
+```text
+create compilation result
+create workflow invocation
+poll workflow invocation state
+```
+
+Miután ez érthető, később ugyanennek egy részét Dataform provider operatorokra lehet cserélni.
+
 ---
 
 ## 1. DAG fájlok
@@ -171,6 +238,7 @@ day4-airflow/materials/dags/sales_export_dag.py
 day4-airflow/materials/dags/sales_dataform_export_dag.py
 day4-airflow/materials/dags/parallel_market_exports_dag.py
 day4-airflow/materials/dags/pipeline_with_notifications_dag.py
+day4-airflow/materials/dags/bigquery_operator_showcase_dag.py
 ```
 
 Másold őket a lokális Airflow projekt `dags` mappájába.
@@ -182,6 +250,7 @@ cp ~/ford-training-vol3/day4-airflow/materials/dags/sales_export_dag.py ~/gcp-tr
 cp ~/ford-training-vol3/day4-airflow/materials/dags/sales_dataform_export_dag.py ~/gcp-training-airflow/dags/
 cp ~/ford-training-vol3/day4-airflow/materials/dags/parallel_market_exports_dag.py ~/gcp-training-airflow/dags/
 cp ~/ford-training-vol3/day4-airflow/materials/dags/pipeline_with_notifications_dag.py ~/gcp-training-airflow/dags/
+cp ~/ford-training-vol3/day4-airflow/materials/dags/bigquery_operator_showcase_dag.py ~/gcp-training-airflow/dags/
 ```
 
 Windows PowerShell példa:
@@ -191,6 +260,7 @@ copy .\day4-airflow\materials\dags\sales_export_dag.py $HOME\gcp-training-airflo
 copy .\day4-airflow\materials\dags\sales_dataform_export_dag.py $HOME\gcp-training-airflow\dags\
 copy .\day4-airflow\materials\dags\parallel_market_exports_dag.py $HOME\gcp-training-airflow\dags\
 copy .\day4-airflow\materials\dags\pipeline_with_notifications_dag.py $HOME\gcp-training-airflow\dags\
+copy .\day4-airflow\materials\dags\bigquery_operator_showcase_dag.py $HOME\gcp-training-airflow\dags\
 ```
 
 ---
@@ -212,6 +282,14 @@ Add hozzá:
 _PIP_ADDITIONAL_REQUIREMENTS=google-cloud-bigquery google-cloud-storage google-auth requests
 ```
 
+Ha a `bigquery_operator_showcase_dag` DAG-ot is használni szeretnéd, akkor szükség van a Google Airflow providerre is:
+
+```text
+_PIP_ADDITIONAL_REQUIREMENTS=apache-airflow-providers-google google-cloud-bigquery google-cloud-storage google-auth requests
+```
+
+Megjegyzés: a provider csomag nagyobb dependency csomagot húzhat be, ezért a fő pipeline DAG-ok nem erre épülnek.
+
 Windows PowerShellben szerkesztheted VS Code-dal is:
 
 ```powershell
@@ -222,7 +300,78 @@ Megjegyzés: ez tréninghez kényelmes megoldás. Production Airflow környezetb
 
 ---
 
-## 3. GCP autentikáció lokális Airflowhoz
+## 3. Google provider connection
+
+Ez csak a `bigquery_operator_showcase_dag` futtatásához kell.
+
+A BigQuery provider operator nem csak Airflow Variable-öket használ, hanem Airflow Connectiont is. Ezért ha ezt látod:
+
+```text
+AirflowNotFoundException: The conn_id `google_cloud_default` isn't defined
+```
+
+akkor nem változó hiányzik, hanem a `google_cloud_default` nevű connection.
+
+A lokális Airflow projekt mappájában add hozzá CLI-ból:
+
+```bash
+cd ~/gcp-training-airflow
+
+docker compose exec airflow-apiserver airflow connections add google_cloud_default \
+  --conn-type google-cloud-platform \
+  --conn-extra '{
+    "extra__google_cloud_platform__project": "ford-training-430008",
+    "extra__google_cloud_platform__scope": "https://www.googleapis.com/auth/cloud-platform"
+  }'
+```
+
+Ha a compose setupodban nincs `airflow-apiserver` service, próbáld a webserverrel:
+
+```bash
+docker compose exec airflow-webserver airflow connections add google_cloud_default \
+  --conn-type google-cloud-platform \
+  --conn-extra '{
+    "extra__google_cloud_platform__project": "ford-training-430008",
+    "extra__google_cloud_platform__scope": "https://www.googleapis.com/auth/cloud-platform"
+  }'
+```
+
+Airflow UI-ból is felvehető:
+
+```text
+Admin / Connections / +
+Connection Id: google_cloud_default
+Connection Type: Google Cloud
+Project Id: ford-training-430008
+Scope: https://www.googleapis.com/auth/cloud-platform
+```
+
+Fontos: a `Keyfile JSON` mezőt hagyd üresen. Az `application_default_credentials.json`, amit a `gcloud auth application-default login` készít, user credential, nem service account key. Ha ezt bemásolod a `Keyfile JSON` mezőbe, ilyen hibát kapsz:
+
+```text
+MalformedError: Service account info was not in the expected format, missing fields token_uri, client_email.
+```
+
+Ebben a tréning setupban a connection csak azt mondja meg, hogy Google Cloud kapcsolat kell, a tényleges credentialt pedig a következő fejezetben beállított `GOOGLE_APPLICATION_CREDENTIALS` env var adja.
+
+Ha már létrehoztad rossz tartalommal a connectiont, töröld és vedd fel újra:
+
+```bash
+docker compose exec airflow-apiserver airflow connections delete google_cloud_default
+
+docker compose exec airflow-apiserver airflow connections add google_cloud_default \
+  --conn-type google-cloud-platform \
+  --conn-extra '{
+    "extra__google_cloud_platform__project": "ford-training-430008",
+    "extra__google_cloud_platform__scope": "https://www.googleapis.com/auth/cloud-platform"
+  }'
+```
+
+Ha más projectben dolgozol, természetesen a saját project id-t használd.
+
+---
+
+## 4. GCP autentikáció lokális Airflowhoz
 
 Lokális Airflow esetén a konténer nem látja automatikusan a géped `gcloud` belépését.
 
@@ -254,7 +403,7 @@ Fontos: ezt a fájlt ne commitold Gitbe. Személyes credential.
 
 ---
 
-## 4. `docker-compose.yaml` módosítása
+## 5. `docker-compose.yaml` módosítása
 
 Az Airflow konténereknek meg kell mondani, hol találják a credential fájlt.
 
@@ -290,7 +439,7 @@ Az első újraindítás lassabb lehet, mert a Python csomagok települnek.
 
 ---
 
-## 5. GCP jogosultságok
+## 6. GCP jogosultságok
 
 Annak a Google accountnak vagy service accountnak, amelyik az Application Default Credentials mögött van, legalább ezekre van szüksége:
 
@@ -311,7 +460,7 @@ Ha később authenticated Cloud Run hívást szeretnénk mutatni, akkor:
 
 ---
 
-## 6. Airflow Variables beállítása
+## 7. Airflow Variables beállítása
 
 A DAG-ok nem hardcode-olják a résztvevő saját neveit és URL-jeit. Ezeket Airflow Variables-ben állítjuk be.
 
@@ -404,6 +553,8 @@ Ezek csak a `sales_dataform_export_dag` futtatásához kellenek.
 | `dataform_wait_timeout_seconds` | `900` | maximum várakozás |
 | `dataform_poll_seconds` | `15` | poll gyakoriság |
 | `demo_task_delay_seconds` | `3` | mesterséges várakozás másodpercben a látványosabb demo kedvéért |
+| `gcp_conn_id` | `google_cloud_default` | Airflow Google provider connection id az operatoros példához |
+| `bigquery_location` | `europe-west4` | BigQuery job location az operatoros példához |
 
 A 2. napi setupban a repository jellemzően így nézett ki:
 
@@ -511,7 +662,7 @@ akkor ellenőrizd, hogy a `dataform_service_account` változó nem a default Dat
 
 ---
 
-## 7. Első futtatás: `sales_export_dag`
+## 8. Első futtatás: `sales_export_dag`
 
 Először ezt futtasd:
 
@@ -556,7 +707,7 @@ A UI-ban érdemes megmutatni:
 
 ---
 
-## 8. Második futtatás: `sales_dataform_export_dag`
+## 9. Második futtatás: `sales_dataform_export_dag`
 
 Ha a Dataform változók is be vannak állítva, futtasd:
 
@@ -604,7 +755,7 @@ Ebben a DAG-ban különösen hasznos megfigyelni:
 
 ---
 
-## 9. Mit érdemes élőben demonstrálni?
+## 10. Mit érdemes élőben demonstrálni?
 
 ### Harmadik futtatás: `parallel_market_exports_dag`
 
@@ -732,7 +883,7 @@ Ez jól mutatja, hogy Airflow nem nyeli el a downstream rendszer hibáját, hane
 
 ---
 
-## 10. Miért nem Airflow indítja az importert?
+## 11. Miért nem Airflow indítja az importert?
 
 A 3. napi importer event-driven patternre épül:
 
@@ -771,7 +922,7 @@ Ez közelebb áll a valós rendszerekhez, mint ha mindent egyetlen monolit DAG-b
 
 ---
 
-## 11. Cleanup és biztonság
+## 12. Cleanup és biztonság
 
 A lokális Airflow leállítása:
 
