@@ -169,6 +169,8 @@ A repositoryban a DAG-ok itt vannak:
 ```text
 day4-airflow/materials/dags/sales_export_dag.py
 day4-airflow/materials/dags/sales_dataform_export_dag.py
+day4-airflow/materials/dags/parallel_market_exports_dag.py
+day4-airflow/materials/dags/pipeline_with_notifications_dag.py
 ```
 
 Másold őket a lokális Airflow projekt `dags` mappájába.
@@ -178,6 +180,8 @@ Ha az első gyakorlat szerint dolgoztál:
 ```bash
 cp ~/ford-training-vol3/day4-airflow/materials/dags/sales_export_dag.py ~/gcp-training-airflow/dags/
 cp ~/ford-training-vol3/day4-airflow/materials/dags/sales_dataform_export_dag.py ~/gcp-training-airflow/dags/
+cp ~/ford-training-vol3/day4-airflow/materials/dags/parallel_market_exports_dag.py ~/gcp-training-airflow/dags/
+cp ~/ford-training-vol3/day4-airflow/materials/dags/pipeline_with_notifications_dag.py ~/gcp-training-airflow/dags/
 ```
 
 Windows PowerShell példa:
@@ -185,6 +189,8 @@ Windows PowerShell példa:
 ```powershell
 copy .\day4-airflow\materials\dags\sales_export_dag.py $HOME\gcp-training-airflow\dags\
 copy .\day4-airflow\materials\dags\sales_dataform_export_dag.py $HOME\gcp-training-airflow\dags\
+copy .\day4-airflow\materials\dags\parallel_market_exports_dag.py $HOME\gcp-training-airflow\dags\
+copy .\day4-airflow\materials\dags\pipeline_with_notifications_dag.py $HOME\gcp-training-airflow\dags\
 ```
 
 ---
@@ -397,6 +403,7 @@ Ezek csak a `sales_dataform_export_dag` futtatásához kellenek.
 | `dataform_workspace` | `development` | opcionális; ha be van állítva, workspace-ből compile-olunk |
 | `dataform_wait_timeout_seconds` | `900` | maximum várakozás |
 | `dataform_poll_seconds` | `15` | poll gyakoriság |
+| `demo_task_delay_seconds` | `3` | mesterséges várakozás másodpercben a látványosabb demo kedvéért |
 
 A 2. napi setupban a repository jellemzően így nézett ki:
 
@@ -598,6 +605,102 @@ Ebben a DAG-ban különösen hasznos megfigyelni:
 ---
 
 ## 9. Mit érdemes élőben demonstrálni?
+
+### Harmadik futtatás: `parallel_market_exports_dag`
+
+Ez a DAG a fan-out / fan-in mintát mutatja meg.
+
+Várt task sorrend:
+
+```text
+check_sales_gold
+  ↓
+prepare_export_requests
+  ↓
+export_market_hu   export_market_cz   export_market_sk   export_all_markets
+       \                 |                  |                    /
+        \                |                  |                   /
+         v               v                  v                  v
+                    collect_export_results
+                              ↓
+                    verify_all_export_files
+                              ↓
+                    final_success_notification
+```
+
+Taskok szerepe:
+
+| Task | Mit csinál? | Miért jó tréningpélda? |
+|---|---|---|
+| `check_sales_gold` | Ellenőrzi, hogy a GOLD tábla nem üres. | Nem indítunk párhuzamos exportokat, ha nincs mit exportálni. |
+| `prepare_export_requests` | Összerakja a különböző export payloadokat: HU, CZ, SK és teljes export. | Megmutatja, hogy az Airflow tud előkészített paramétereket továbbadni XComon keresztül. |
+| `export_market_hu` / `export_market_cz` / `export_market_sk` / `export_all_markets` | Ugyanazt a Cloud Run exportert hívják meg különböző filterekkel. | Ez a fan-out rész: több független task párhuzamosan fut. |
+| `collect_export_results` | Összegyűjti az összes exporter válaszát. | Ez a fan-in kezdete: egy közös task bevárja az összes párhuzamos exportot. |
+| `verify_all_export_files` | Minden exportált `gs://...xlsx` fájlt ellenőriz Cloud Storage-ban. | Megmutatja, hogy nem elég elindítani a párhuzamos munkát, az eredményt is közösen validálni kell. |
+| `final_success_notification` | Logba kiírja az összes sikeres export URI-ját. | Egyszerű, setup nélküli notification minta. |
+
+Ez a DAG azért látványos, mert a Graph nézetben tényleg szétnyílik a pipeline, majd újra összezár.
+
+A `demo_task_delay_seconds` változó miatt a taskok nem futnak le azonnal. Így a Grid és Graph nézetben jól megfigyelhető:
+
+- melyik task fut párhuzamosan,
+- mikor várakozik a közös gyűjtő task,
+- hogyan állna meg a pipeline, ha az egyik export hibázna,
+- hogy a végső notification csak az összes sikeres export után fut.
+
+### Negyedik futtatás: `pipeline_with_notifications_dag`
+
+Ez a DAG a success / failure notification mintát mutatja meg.
+
+Várt fő folyamat:
+
+```text
+start_pipeline
+  ↓
+create_dataform_compilation_result
+  ↓
+create_dataform_workflow_invocation
+  ↓
+wait_for_dataform_workflow_invocation
+  ↓
+check_sales_gold
+  ↓
+trigger_cloud_run_exporter
+  ↓
+verify_export_file
+  ↓
+success_notification
+```
+
+Hiba esetén:
+
+```text
+any failed pipeline task
+  ↓
+failure_notification
+```
+
+Taskok szerepe:
+
+| Task | Mit csinál? | Miért jó tréningpélda? |
+|---|---|---|
+| `start_pipeline` | Logba kiírja a pipeline indulását és a DAG run azonosítót. | Megmutatja, hogy lehet explicit pipeline kezdőpontot használni. |
+| Dataform taskok | Compile, workflow invocation, majd Dataform futás megvárása. | Ugyanazt az end-to-end transformation mintát használja, mint a fő Dataform DAG. |
+| `check_sales_gold` | GOLD ellenőrzési kapu. | Példa arra, hogy notification előtt is érdemes validálni az eredményt. |
+| `trigger_cloud_run_exporter` | Meghívja a Cloud Run exportert. | Külső service indítása sikeres transformation után. |
+| `verify_export_file` | Ellenőrzi a Cloud Storage export fájlt. | A pipeline végállapotát objektíven ellenőrzi. |
+| `success_notification` | Csak teljes siker esetén fut, és kiírja az export URI-t. | Egyszerű success notification minta. |
+| `failure_notification` | Ha bármelyik fő pipeline task hibázik, kiírja a failed taskokat. | Megmutatja, hogyan lehet failure ágat építeni trigger rule-lal. |
+
+Ez a DAG azért hasznos, mert átvezet az üzemeltetési gondolkodásba. A résztvevők látják, hogy egy pipeline nem csak feldolgozásból áll, hanem státuszkommunikációból is.
+
+Most a notification csak Airflow logba ír. Ez szándékos, mert nem akarunk Slack, Teams vagy email setupot behozni a tréningbe. Production környezetben ugyanez a pattern továbbvihető:
+
+- Slack webhookra,
+- Teams webhookra,
+- emailre,
+- Pub/Sub üzenetre,
+- incident management rendszerre.
 
 ### Sikeres export
 

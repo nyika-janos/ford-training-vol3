@@ -12,5 +12,6 @@
   "dataform_git_commitish": "main",
   "dataform_workspace": "development",
   "dataform_wait_timeout_seconds": "900",
-  "dataform_poll_seconds": "15"
+  "dataform_poll_seconds": "15",
+  "demo_task_delay_seconds": "3"
 }
