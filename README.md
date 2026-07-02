@@ -1,4 +1,4 @@
-# Ford GCP Training – 3. kötet
+# Ford GCP Training – 3. rész
 
 <p align="center">
   <img src="other/ford-training-vol3_architecture.png" alt="A Ford training 3. kötetének target architecture diagramja" width="100%">
